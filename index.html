@@ -1020,8 +1020,11 @@ function clearSheet() {
 
 function printSheet() {
   document.body.classList.add("print-sheet-only");
+  window.onafterprint = () => {
+    document.body.classList.remove("print-sheet-only");
+    window.onafterprint = null;
+  };
   window.print();
-  document.body.classList.remove("print-sheet-only");
 }
 
 function renderSheet() {
