@@ -1159,6 +1159,13 @@ function makeText(str, x, y, fill, fontSize, bold = false) {
 }
 
 buildButtons();
+
+// 初期表示：Cメジャー
+selectedRoot = "C";
+selectedType = "major";
+updateActive("rootBtns", "C", "root");
+updateActive("typeBtns", "major", "type");
+render();
 </script>
 </body>
 </html>
