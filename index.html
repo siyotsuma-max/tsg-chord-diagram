@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSG Basic Chord Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    background: #f0f2f5;
+    color: #222;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  /* ====== Header ====== */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: #1a1a2e;
+    letter-spacing: 0.1em;
+  }
+
+  .print-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .print-btn:hover { background: #2e2e50; }
+  .print-btn:active { transform: scale(0.97); }
+
+  /* ====== Controls panel ====== */
+  .controls {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ctrl-label {
+    font-size: 0.85rem;
+    color: #888;
+    width: 76px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .rbtn {
+    min-width: 44px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1.5px solid #ddd;
+    background: #f7f8fa;
+    color: #444;
+    border-radius: 7px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rbtn:hover { background: #eef0f4; border-color: #bbb; }
+  .rbtn:active { transform: scale(0.93); }
+  .rbtn.active {
+    background: #c0392b;
+    border-color: #c0392b;
+    color: #fff;
+  }
+
+  .tbtn {
+    padding: 8px 16px;
+    border: 1.5px solid #ddd;
+    background: #f7f8fa;
+    color: #555;
+    border-radius: 7px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tbtn:hover { background: #eef0f4; border-color: #bbb; }
+  .tbtn:active { transform: scale(0.93); }
+  .tbtn.active {
+    background: #2176ae;
+    border-color: #2176ae;
+    color: #fff;
+  }
+
+  /* ====== Diagrams area ====== */
+  .diagrams-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .chord-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 18px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chord-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
+
+  .chord-position {
+    font-size: 0.72rem;
+    color: #999;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .no-chord {
+    color: #aaa;
+    font-size: 0.95rem;
+    padding: 40px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ====== Legend ====== */
+  .finger-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    font-size: 0.78rem;
+    color: #888;
+    font-weight: 600;
+  }
+
+  .finger-legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .acc-toggle {
+    padding: 7px 12px;
+    border: 1.5px solid #2176ae;
+    background: #fff;
+    color: #2176ae;
+    border-radius: 7px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.12s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .acc-toggle.flat-mode {
+    background: #2176ae;
+    border-color: #2176ae;
+    color: #fff;
+  }
+
+  /* ====== Add button ====== */
+  .add-btn {
+    margin-top: 10px;
+    padding: 9px 20px;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .add-btn:hover { background: #219a52; }
+  .add-btn:active { transform: scale(0.97); }
+  .add-btn:disabled { background: #bbb; cursor: default; transform: none; }
+
+  /* ====== Chord Sheet ====== */
+  .sheet-section {
+    margin-top: 28px;
+  }
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sheet-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2rem;
+    color: #1a1a2e;
+    letter-spacing: 0.08em;
+  }
+  .sheet-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-left: 8px;
+    font-weight: 600;
+  }
+  .sheet-actions { display: flex; gap: 8px; }
+  .clear-btn {
+    padding: 9px 16px;
+    background: #f0f2f5;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: 0.12s;
+  }
+  .clear-btn:hover { background: #e5e8ee; }
+
+  .sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 16px;
+    justify-content: flex-start;
+  }
+  .sheet-empty {
+    grid-column: 1 / -1;
+    color: #bbb;
+    font-size: 0.9rem;
+    padding: 24px 0;
+  }
+  .sheet-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 16px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .sheet-card.compact {
+    padding: 8px 10px 10px;
+    border-radius: 9px;
+  }
+  .sheet-card.compact .chord-name { font-size: 1.1rem; }
+  .sheet-card.compact .chord-position { font-size: 0.62rem; margin-bottom: 6px; }
+  .sheet-card-remove {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+    transition: 0.1s;
+  }
+  .sheet-card-remove:hover { color: #c0392b; }
+
+  /* ====== Print ====== */
+  @media print {
+    body { background: #fff; padding: 8px; }
+    /* 通常印刷 */
+    body:not(.print-sheet-only) header .print-btn { display: none; }
+    body:not(.print-sheet-only) .sheet-section { display: none; }
+    body:not(.print-sheet-only) .chord-card { box-shadow: none; border: 1px solid #ddd; }
+    /* コード表だけ印刷 */
+    body.print-sheet-only header,
+    body.print-sheet-only .controls,
+    body.print-sheet-only .diagrams-area,
+    body.print-sheet-only .finger-legend-main { display: none; }
+    body.print-sheet-only .sheet-section { margin-top: 0; }
+    body.print-sheet-only .sheet-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    body.print-sheet-only .sheet-actions { display: none; }
+    body.print-sheet-only .sheet-card-remove { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎸 TSG BASIC CHORD DIAGRAM</h1>
+  <button class="print-btn" onclick="window.print()">🖨 印刷 / PDF</button>
+</header>
+
+<div class="controls">
+  <div class="ctrl-row">
+    <span class="ctrl-label">ルート音</span>
+    <div class="btn-group" id="rootBtns"></div>
+    <button class="acc-toggle" id="flatToggle" onclick="toggleFlat()">♭</button>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">コードタイプ</span>
+    <div class="btn-group" id="typeBtns"></div>
+  </div>
+</div>
+
+<div class="diagrams-area" id="diagramsArea">
+  <div class="no-chord">ルート音とコードタイプを選んでください</div>
+</div>
+
+<div class="finger-legend finger-legend-main">
+  <span><span class="legend-dot" style="background:#2176ae"></span> 人差し指（1）</span>
+  <span><span class="legend-dot" style="background:#c0392b"></span> 中指（2）</span>
+  <span><span class="legend-dot" style="background:#27ae60"></span> 薬指（3）</span>
+  <span><span class="legend-dot" style="background:#e67e22"></span> 小指（4）</span>
+</div>
+
+<!-- マイコード表 -->
+<div class="sheet-section" id="sheetSection">
+  <div class="sheet-header">
+    <div>
+      <span class="sheet-title">マイコード表</span>
+      <span class="sheet-count" id="sheetCount">0 / 8</span>
+    </div>
+    <div class="sheet-actions">
+      <button class="clear-btn" onclick="clearSheet()">全消去</button>
+      <button class="print-btn" onclick="printSheet()">🖨 コード表を印刷</button>
+    </div>
+  </div>
+  <div class="sheet-grid" id="sheetGrid">
+    <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大8個）</div>
+  </div>
+</div>
+
+<script>
+// ===== コードデータ =====
+// 各コード: { frets: [6弦,5弦,4弦,3弦,2弦,1弦], fingers: [同順], baseFret: 1, label: "ポジション名" }
+// frets: -1=ミュート, 0=開放弦, 1以上=フレット番号(baseFret基準の相対値)
+// fingers: 0=なし, 1=人差し指, 2=中指, 3=薬指, 4=小指
+
+const CHORDS = {
+  "C": {
+    "major": [
+      { label: "ローコード", frets: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], baseFret: 1 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 3 }
+    ],
+    "7": [
+      { label: "ローコード", frets: [-1, 3, 2, 3, 1, 0], fingers: [0, 3, 2, 4, 1, 0], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [-1, 3, 2, 0, 0, 0], fingers: [0, 3, 2, 0, 0, 0], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 3 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [-1, 1, 2, 1, 2, -1], fingers: [0, 1, 2, 3, 4, 0], baseFret: 3 }
+    ],
+    "dim": [
+      { label: "Aフォーム", frets: [-1, -1, 1, 2, 1, 2], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "ローコード", frets: [-1, 3, 3, 0, 1, 1], fingers: [0, 3, 4, 0, 1, 1], baseFret: 1 }
+    ]
+  },
+  "C#": {
+    "major": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 4 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 4 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 4 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 2, 3, 1], fingers: [0, 1, 3, 2, 4, 1], baseFret: 4 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 4 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [-1, 1, 2, 1, 2, -1], fingers: [0, 1, 2, 3, 4, 0], baseFret: 4 }
+    ],
+    "dim": [
+      { label: "Bフォーム", frets: [-1, -1, 2, 3, 2, 3], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 4, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 4 }
+    ]
+  },
+  "D": {
+    "major": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2], baseFret: 1 }
+    ],
+    "m": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1], baseFret: 1 }
+    ],
+    "7": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 0, 1, 1, 1], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 1, 1], fingers: [0, 0, 0, 2, 1, 1], baseFret: 1 }
+    ],
+    "m7b5": [
+      { label: "ローコード", frets: [-1, -1, 0, 1, 1, 1], fingers: [0, 0, 0, 1, 1, 1], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Cフォーム", frets: [-1, -1, 0, 1, 0, 1], fingers: [0, 0, 0, 1, 0, 2], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "ローコード", frets: [-1, -1, 0, 2, 3, 3], fingers: [0, 0, 0, 1, 3, 4], baseFret: 1 }
+    ]
+  },
+  "D#": {
+    "major": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 6 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 6 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 6 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 2, 3, 1], fingers: [0, 1, 3, 2, 4, 1], baseFret: 6 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 6 }
+    ],
+    "m7b5": [
+      { label: "ローコード", frets: [-1, -1, 1, 2, 2, 2], fingers: [0, 0, 1, 2, 3, 4], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Aフォーム", frets: [-1, -1, 1, 2, 1, 2], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 4, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 6 }
+    ]
+  },
+  "E": {
+    "major": [
+      { label: "ローコード", frets: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0], baseFret: 1 }
+    ],
+    "m": [
+      { label: "ローコード", frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], baseFret: 1 }
+    ],
+    "7": [
+      { label: "ローコード", frets: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [0, -1, 2, 4, 4, 4], fingers: [0, 0, 1, 2, 3, 4], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "ローコード", frets: [0, 2, 0, 0, 0, 0], fingers: [0, 2, 0, 0, 0, 0], baseFret: 1 }
+    ],
+    "m7b5": [
+      { label: "ローコード", frets: [-1, -1, 2, 3, 3, 3], fingers: [0, 0, 1, 2, 3, 4], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Bフォーム", frets: [-1, -1, 2, 3, 2, 3], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "ローコード", frets: [0, 2, 2, 2, 0, 0], fingers: [0, 1, 2, 3, 0, 0], baseFret: 1 }
+    ]
+  },
+  "F": {
+    "major": [
+      { label: "バレーコード", frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], baseFret: 1 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], baseFret: 1 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [1, 3, 1, 2, 1, 1], fingers: [1, 3, 1, 2, 1, 1], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [-1, -1, 3, 2, 1, 0], fingers: [0, 0, 3, 2, 1, 0], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [1, 3, 1, 1, 1, 1], fingers: [1, 3, 1, 1, 1, 1], baseFret: 1 }
+    ],
+    "m7b5": [
+      { label: "ローコード", frets: [-1, -1, 3, 4, 4, 4], fingers: [0, 0, 1, 2, 3, 4], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Cフォーム", frets: [-1, -1, 0, 1, 0, 1], fingers: [0, 0, 0, 1, 0, 2], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [1, 3, 3, 3, 1, 1], fingers: [1, 2, 3, 4, 1, 1], baseFret: 1 }
+    ]
+  },
+  "F#": {
+    "major": [
+      { label: "バレーコード", frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], baseFret: 2 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], baseFret: 2 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [1, 3, 1, 2, 1, 1], fingers: [1, 3, 1, 2, 1, 1], baseFret: 2 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [2, -1, 3, 3, 2, -1], fingers: [1, 0, 3, 4, 2, 0], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [1, 3, 1, 1, 1, 1], fingers: [1, 3, 1, 1, 1, 1], baseFret: 2 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [2, -1, 2, 2, 1, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Aフォーム", frets: [-1, -1, 1, 2, 1, 2], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [1, 3, 3, 3, 1, 1], fingers: [1, 2, 3, 4, 1, 1], baseFret: 2 }
+    ]
+  },
+  "G": {
+    "major": [
+      { label: "ローコード", frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], baseFret: 1 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], baseFret: 3 }
+    ],
+    "7": [
+      { label: "ローコード", frets: [3, 2, 0, 0, 0, 1], fingers: [3, 2, 0, 0, 0, 1], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [3, 2, 0, 0, 0, 2], fingers: [2, 1, 0, 0, 0, 3], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [1, 3, 1, 1, 1, 1], fingers: [1, 3, 1, 1, 1, 1], baseFret: 3 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [2, -1, 2, 2, 1, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 2 }
+    ],
+    "dim": [
+      { label: "Bフォーム", frets: [-1, -1, 2, 3, 2, 3], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "ローコード", frets: [3, -1, 0, 0, 1, 3], fingers: [3, 0, 0, 0, 1, 4], baseFret: 1 }
+    ]
+  },
+  "G#": {
+    "major": [
+      { label: "バレーコード", frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], baseFret: 4 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], baseFret: 4 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [1, 3, 1, 2, 1, 1], fingers: [1, 3, 1, 2, 1, 1], baseFret: 4 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [1, -1, 2, 2, 1, -1], fingers: [1, 0, 3, 4, 2, 0], baseFret: 4 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [1, 3, 1, 1, 1, 1], fingers: [1, 3, 1, 1, 1, 1], baseFret: 4 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [2, -1, 2, 2, 1, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 3 }
+    ],
+    "dim": [
+      { label: "Cフォーム", frets: [-1, -1, 0, 1, 0, 1], fingers: [0, 0, 0, 1, 0, 2], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [1, 3, 3, 3, 1, 1], fingers: [1, 2, 3, 4, 1, 1], baseFret: 4 }
+    ]
+  },
+  "A": {
+    "major": [
+      { label: "ローコード", frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0], baseFret: 1 }
+    ],
+    "m": [
+      { label: "ローコード", frets: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], baseFret: 1 }
+    ],
+    "7": [
+      { label: "ローコード", frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "ローコード", frets: [-1, 0, 2, 1, 2, 0], fingers: [0, 0, 2, 1, 3, 0], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "ローコード", frets: [-1, 0, 2, 0, 1, 0], fingers: [0, 0, 2, 0, 1, 0], baseFret: 1 }
+    ],
+    "m7b5": [
+      { label: "ローコード", frets: [-1, 0, 1, 0, 1, -1], fingers: [0, 0, 1, 0, 2, 0], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Aフォーム", frets: [-1, -1, 1, 2, 1, 2], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "ローコード", frets: [-1, 0, 2, 2, 3, 0], fingers: [0, 0, 1, 2, 3, 0], baseFret: 1 }
+    ]
+  },
+  "A#": {
+    "major": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 1 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 1 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 1 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 2, 3, 1], fingers: [0, 1, 3, 2, 4, 1], baseFret: 1 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 1 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [-1, 1, 2, 1, 2, -1], fingers: [0, 1, 2, 3, 4, 0], baseFret: 1 }
+    ],
+    "dim": [
+      { label: "Bフォーム", frets: [-1, -1, 2, 3, 2, 3], fingers: [0, 0, 1, 2, 1, 3], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 4, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 1 }
+    ]
+  },
+  "B": {
+    "major": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 3, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 2 }
+    ],
+    "m": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 2 }
+    ],
+    "7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 2 }
+    ],
+    "maj7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 3, 0], fingers: [0, 1, 2, 3, 4, 0], baseFret: 2 }
+    ],
+    "m7": [
+      { label: "バレーコード", frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 2 }
+    ],
+    "m7b5": [
+      { label: "バレーコード", frets: [-1, 1, 2, 1, 2, -1], fingers: [0, 1, 2, 3, 4, 0], baseFret: 2 }
+    ],
+    "dim": [
+      { label: "Cフォーム", frets: [-1, -1, 0, 1, 0, 1], fingers: [0, 0, 0, 1, 0, 2], baseFret: 1 }
+    ],
+    "sus4": [
+      { label: "バレーコード", frets: [-1, 1, 3, 3, 4, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 2 }
+    ]
+  }
+};
+
+const ROOTS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const TYPES = [
+  { key: "major", label: "major",  chordLabel: ""      },
+  { key: "m",     label: "minor",  chordLabel: "m"     },
+  { key: "7",     label: "7",      chordLabel: "7"     },
+  { key: "maj7",  label: "maj7",   chordLabel: "maj7"  },
+  { key: "m7",    label: "m7",     chordLabel: "m7"    },
+  { key: "m7b5",  label: "m7♭5",  chordLabel: "m7♭5" },
+  { key: "dim",   label: "dim",    chordLabel: "dim"   },
+  { key: "sus4",  label: "sus4",   chordLabel: "sus4"  }
+];
+
+const FLAT_NAMES = { "C#":"D♭", "D#":"E♭", "F#":"G♭", "G#":"A♭", "A#":"B♭" };
+let useFlat = false;
+
+const FINGER_COLORS = ["", "#2176ae", "#c0392b", "#27ae60", "#e67e22"];
+
+// ルート音検出用
+const ROOT_SEMITONES = { C:0, "C#":1, D:2, "D#":3, E:4, F:5, "F#":6, G:7, "G#":8, A:9, "A#":10, B:11 };
+const OPEN_STRINGS = [4, 9, 2, 7, 11, 4]; // 6弦〜1弦: E, A, D, G, B, E
+
+let selectedRoot = null;
+let selectedType = null;
+let myChords = [];
+
+// ===== UIセットアップ =====
+function buildButtons() {
+  const rb = document.getElementById("rootBtns");
+  ROOTS.forEach(r => {
+    const btn = document.createElement("button");
+    btn.className = "rbtn";
+    btn.textContent = r;
+    btn.dataset.root = r;
+    btn.onclick = () => { selectedRoot = r; updateActive("rootBtns", r, "root"); render(); };
+    rb.appendChild(btn);
+  });
+
+  const tb = document.getElementById("typeBtns");
+  TYPES.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "tbtn";
+    btn.textContent = t.label;
+    btn.dataset.type = t.key;
+    btn.onclick = () => { selectedType = t.key; updateActive("typeBtns", t.key, "type"); render(); };
+    tb.appendChild(btn);
+  });
+}
+
+function toggleFlat() {
+  useFlat = !useFlat;
+  document.getElementById("flatToggle").classList.toggle("flat-mode", useFlat);
+  document.querySelectorAll("#rootBtns button").forEach(btn => {
+    const r = btn.dataset.root;
+    btn.textContent = (useFlat && FLAT_NAMES[r]) ? FLAT_NAMES[r] : r;
+  });
+  render();
+}
+
+function updateActive(groupId, value, attr) {
+  document.querySelectorAll(`#${groupId} button`).forEach(b => {
+    b.classList.toggle("active", b.dataset[attr] === value);
+  });
+}
+
+// ===== レンダリング =====
+function render() {
+  const area = document.getElementById("diagramsArea");
+  if (!selectedRoot || !selectedType) {
+    area.innerHTML = '<div class="no-chord">ルート音とコードタイプを選んでください</div>';
+    return;
+  }
+
+  const chords = CHORDS[selectedRoot]?.[selectedType];
+  if (!chords || chords.length === 0) {
+    area.innerHTML = '<div class="no-chord">データがありません</div>';
+    return;
+  }
+
+  const typeEntry = TYPES.find(t => t.key === selectedType);
+  const chordLabel = typeEntry?.chordLabel ?? selectedType;
+  const displayRoot = (useFlat && FLAT_NAMES[selectedRoot]) ? FLAT_NAMES[selectedRoot] : selectedRoot;
+  const chordName = displayRoot + chordLabel;
+
+  area.innerHTML = "";
+  chords.forEach((chord, idx) => {
+    const card = document.createElement("div");
+    card.className = "chord-card";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "chord-name";
+    nameEl.textContent = chordName;
+    card.appendChild(nameEl);
+
+    const posEl = document.createElement("div");
+    posEl.className = "chord-position";
+    posEl.textContent = chord.label + (chord.baseFret > 1 ? `（${chord.baseFret}fr）` : "");
+    card.appendChild(posEl);
+
+    card.appendChild(drawDiagram(chord, selectedRoot));
+
+    const addBtn = document.createElement("button");
+    addBtn.className = "add-btn";
+    addBtn.textContent = "＋ コード表に追加";
+    addBtn.disabled = myChords.length >= 12;
+    addBtn.onclick = () => addToSheet(selectedRoot, selectedType, chord, chordName);
+    card.appendChild(addBtn);
+
+    area.appendChild(card);
+  });
+}
+
+// ===== マイコード表 =====
+function addToSheet(root, type, chord, chordName) {
+  if (myChords.length >= 12) return;
+  myChords.push({ root, type, chord, chordName });
+  renderSheet();
+  render(); // 追加ボタンのdisabled状態を更新
+}
+
+function removeFromSheet(idx) {
+  myChords.splice(idx, 1);
+  renderSheet();
+  render();
+}
+
+function clearSheet() {
+  myChords = [];
+  renderSheet();
+  render();
+}
+
+function printSheet() {
+  document.body.classList.add("print-sheet-only");
+  window.print();
+  document.body.classList.remove("print-sheet-only");
+}
+
+function renderSheet() {
+  const grid = document.getElementById("sheetGrid");
+  const count = document.getElementById("sheetCount");
+  count.textContent = `${myChords.length} / 12`;
+
+  if (myChords.length === 0) {
+    grid.innerHTML = '<div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大12個）</div>';
+    return;
+  }
+
+  const compact = myChords.length > 8;
+  grid.innerHTML = "";
+  myChords.forEach((item, idx) => {
+    const card = document.createElement("div");
+    card.className = "sheet-card" + (compact ? " compact" : "");
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "sheet-card-remove";
+    removeBtn.textContent = "✕";
+    removeBtn.onclick = () => removeFromSheet(idx);
+    card.appendChild(removeBtn);
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "chord-name";
+    nameEl.textContent = item.chordName;
+    card.appendChild(nameEl);
+
+    const posEl = document.createElement("div");
+    posEl.className = "chord-position";
+    posEl.textContent = item.chord.label + (item.chord.baseFret > 1 ? `（${item.chord.baseFret}fr）` : "");
+    card.appendChild(posEl);
+
+    card.appendChild(drawDiagram(item.chord, item.root, compact));
+    grid.appendChild(card);
+  });
+}
+
+function drawDiagram(chord, rootNote, compact = false) {
+  const rootSemitone = rootNote != null ? ROOT_SEMITONES[rootNote] : null;
+  const NUM_STRINGS = 6;
+  const NUM_FRETS = 5;
+  const STRING_SPACING = compact ? 24 : 32;
+  const FRET_SPACING = compact ? 27 : 36;
+  const MARGIN_LEFT = compact ? 27 : 36;
+  const MARGIN_TOP = compact ? 30 : 40;
+  const DOT_R = compact ? 9 : 12;
+
+  const svgW = MARGIN_LEFT + STRING_SPACING * (NUM_STRINGS - 1) + 30;
+  const svgH = MARGIN_TOP + FRET_SPACING * NUM_FRETS + 20;
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", svgW);
+  svg.setAttribute("height", svgH);
+  svg.style.display = "block";
+
+  const frets = chord.frets;      // [6弦〜1弦]
+  const fingers = chord.fingers;
+  const baseFret = chord.baseFret;
+
+  // ナット（1フレット目のみ太線）
+  if (baseFret === 1) {
+    const nut = makeLine(
+      MARGIN_LEFT, MARGIN_TOP,
+      MARGIN_LEFT + STRING_SPACING * (NUM_STRINGS - 1), MARGIN_TOP,
+      "#1a1a2e", 5
+    );
+    svg.appendChild(nut);
+  }
+
+  // フレット線
+  for (let f = 0; f <= NUM_FRETS; f++) {
+    const y = MARGIN_TOP + f * FRET_SPACING;
+    svg.appendChild(makeLine(MARGIN_LEFT, y, MARGIN_LEFT + STRING_SPACING * (NUM_STRINGS - 1), y, "#ccc", 1));
+  }
+
+  // 弦（縦線）
+  for (let s = 0; s < NUM_STRINGS; s++) {
+    const x = MARGIN_LEFT + s * STRING_SPACING;
+    svg.appendChild(makeLine(x, MARGIN_TOP, x, MARGIN_TOP + FRET_SPACING * NUM_FRETS, "#999", 1.5));
+  }
+
+  // ベースフレット番号（2フレット以上）
+  if (baseFret > 1) {
+    const frFontSize = compact ? "0.55rem" : "0.72rem";
+    const frX = compact ? MARGIN_LEFT - 21 : MARGIN_LEFT - 28;
+    const t = makeText(baseFret + "fr", frX, MARGIN_TOP + FRET_SPACING * 0.65, "#888", frFontSize);
+    svg.appendChild(t);
+  }
+
+  const symbolY = compact ? MARGIN_TOP - 15 : MARGIN_TOP - 20;
+  const openR   = compact ? 7 : 9;
+  const openR2  = compact ? 11 : 14;
+  const fingerFontSize = compact ? "0.58rem" : "0.75rem";
+  const fingerYOffset  = compact ? 3.5 : 4.5;
+
+  // 弦ごとの記号
+  frets.forEach((fret, i) => {
+    const x = MARGIN_LEFT + i * STRING_SPACING;
+
+    const actualPitch = fret === 0 ? OPEN_STRINGS[i] : (OPEN_STRINGS[i] + baseFret - 1 + fret);
+    const isRoot = rootSemitone != null && fret !== -1 && (actualPitch % 12) === rootSemitone;
+
+    if (fret === -1) {
+      // ミュート ×
+      svg.appendChild(makeX(x, symbolY, "#999"));
+    } else if (fret === 0) {
+      // 開放弦 ○
+      svg.appendChild(makeCircleOpen(x, symbolY, openR, "#555"));
+      if (isRoot) svg.appendChild(makeCircleOpen(x, symbolY, openR2, "#555"));
+    } else {
+      // 押弦ドット
+      const y = MARGIN_TOP + (fret - 0.5) * FRET_SPACING;
+      const finger = fingers[i];
+      const color = FINGER_COLORS[finger] || "#ccc";
+      if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 4 : 6), color));
+      if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 2 : 3), "#fff"));
+      svg.appendChild(makeCircleFill(x, y, DOT_R, color));
+      if (finger > 0) {
+        const ft = makeText(String(finger), x, y + fingerYOffset, "#fff", fingerFontSize, true);
+        svg.appendChild(ft);
+      }
+    }
+  });
+
+  return svg;
+}
+
+function makeLine(x1, y1, x2, y2, stroke, sw) {
+  const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+  l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+  l.setAttribute("stroke", stroke);
+  l.setAttribute("stroke-width", sw);
+  return l;
+}
+
+function makeCircleFill(cx, cy, r, fill) {
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+  c.setAttribute("fill", fill);
+  return c;
+}
+
+function makeCircleOpen(cx, cy, r, stroke) {
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+  c.setAttribute("fill", "none");
+  c.setAttribute("stroke", stroke);
+  c.setAttribute("stroke-width", 2);
+  return c;
+}
+
+function makeX(cx, cy, color) {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const d = 7;
+  [[-d,-d,d,d],[d,-d,-d,d]].forEach(([x1,y1,x2,y2]) => {
+    g.appendChild(makeLine(cx+x1, cy+y1, cx+x2, cy+y2, color, 2));
+  });
+  return g;
+}
+
+function makeText(str, x, y, fill, fontSize, bold = false) {
+  const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  t.setAttribute("x", x); t.setAttribute("y", y);
+  t.setAttribute("fill", fill);
+  t.setAttribute("font-size", fontSize);
+  t.setAttribute("text-anchor", "middle");
+  if (bold) t.setAttribute("font-weight", "bold");
+  t.textContent = str;
+  return t;
+}
+
+buildButtons();
+</script>
+</body>
+</html>
