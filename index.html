@@ -417,20 +417,30 @@
 
   /* ====== Print ====== */
   @media print {
-    body { background: #fff; padding: 8px; }
-    /* 通常印刷 */
-    body:not(.print-sheet-only) header .print-btn { display: none; }
-    body:not(.print-sheet-only) .sheet-section { display: none; }
-    body:not(.print-sheet-only) .chord-card { box-shadow: none; border: 1px solid #ddd; }
-    /* コード表だけ印刷 */
+    @page { margin: 10mm; }
+    body { background: #fff; padding: 0; }
     body.print-sheet-only header,
     body.print-sheet-only .controls,
     body.print-sheet-only .diagrams-area,
     body.print-sheet-only .finger-legend-main { display: none; }
     body.print-sheet-only .sheet-section { margin-top: 0; }
-    body.print-sheet-only .sheet-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    body.print-sheet-only .sheet-header { margin-bottom: 8px; }
+    body.print-sheet-only .sheet-count { display: none; }
     body.print-sheet-only .sheet-actions { display: none; }
+    body.print-sheet-only .sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      gap: 8px;
+      justify-content: center;
+    }
+    body.print-sheet-only .sheet-card {
+      box-shadow: none;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+      padding: 6px 8px 8px;
+    }
     body.print-sheet-only .sheet-card-remove { display: none; }
+    body.print-sheet-only .chord-name { font-size: 1.1rem; margin-bottom: 1px; }
   }
 </style>
 </head>
@@ -440,7 +450,6 @@
   <h1>🎸 TSG BASIC CHORD DIAGRAM</h1>
   <div style="display:flex;gap:8px;align-items:center;">
     <button class="help-btn" onclick="document.getElementById('helpModal').classList.add('open')">使い方ガイド</button>
-    <button class="print-btn" onclick="window.print()">🖨 印刷 / PDF</button>
   </div>
 </header>
 
@@ -1037,11 +1046,10 @@ function renderSheet() {
     return;
   }
 
-  const compact = myChords.length > 8;
   grid.innerHTML = "";
   myChords.forEach((item, idx) => {
     const card = document.createElement("div");
-    card.className = "sheet-card" + (compact ? " compact" : "");
+    card.className = "sheet-card compact";
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "sheet-card-remove";
@@ -1054,12 +1062,14 @@ function renderSheet() {
     nameEl.textContent = item.chordName;
     card.appendChild(nameEl);
 
-    const posEl = document.createElement("div");
-    posEl.className = "chord-position";
-    posEl.textContent = item.chord.label + (item.chord.baseFret > 1 ? `（${item.chord.baseFret}fr）` : "");
-    card.appendChild(posEl);
+    if (item.chord.baseFret > 1) {
+      const posEl = document.createElement("div");
+      posEl.className = "chord-position";
+      posEl.textContent = `${item.chord.baseFret}fr`;
+      card.appendChild(posEl);
+    }
 
-    card.appendChild(drawDiagram(item.chord, item.root, compact));
+    card.appendChild(drawDiagram(item.chord, item.root, true));
     grid.appendChild(card);
   });
 }
