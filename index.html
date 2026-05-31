@@ -1264,7 +1264,8 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const fingerYOffset  = compact ? 3.5 : 4.5;
 
   frets.forEach((fret, i) => {
-    const y = MARGIN_TOP + i * STRING_SPACING;
+    // 1弦(i=5)が上、6弦(i=0)が下
+    const y = MARGIN_TOP + (NUM_STRINGS - 1 - i) * STRING_SPACING;
     const actualPitch = fret === 0 ? OPEN_STRINGS[i] : (OPEN_STRINGS[i] + baseFret - 1 + fret);
     const isRoot = rootSemitone != null && fret !== -1 && (actualPitch % 12) === rootSemitone;
 
