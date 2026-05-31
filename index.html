@@ -1236,7 +1236,29 @@ function drawDiagramH(chord, rootNote, compact = false) {
     svg.appendChild(makeLine(MARGIN_LEFT, y, MARGIN_LEFT + FRET_SPACING * NUM_FRETS, y, "#999", 1.5));
   }
 
-  // ※ 記号・ドットは次のステップで追加
+  const frets   = chord.frets;
+  const fingers = chord.fingers;
+
+  // ベースフレット番号（2fr以上は左上に表示）
+  if (baseFret > 1) {
+    const frFontSize = compact ? "0.55rem" : "0.72rem";
+    svg.appendChild(makeText(baseFret + "fr", MARGIN_LEFT + FRET_SPACING * 0.5, MARGIN_TOP - 3, "#888", frFontSize));
+  }
+
+  // 記号（×ミュート・○開放弦）を左側に縦並びで配置
+  const symbolX = compact ? MARGIN_LEFT - 15 : MARGIN_LEFT - 20;
+  const openR   = compact ? 7 : 9;
+
+  frets.forEach((fret, i) => {
+    const y = MARGIN_TOP + i * STRING_SPACING;
+    if (fret === -1) {
+      svg.appendChild(makeX(symbolX, y, "#999"));
+    } else if (fret === 0) {
+      svg.appendChild(makeCircleOpen(symbolX, y, openR, "#555"));
+    }
+    // 押弦ドットは次のステップで追加
+  });
+
   return svg;
 }
 
