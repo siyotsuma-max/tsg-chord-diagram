@@ -936,7 +936,7 @@ const TYPES = [
 
 const FLAT_NAMES = { "C#":"D♭", "D#":"E♭", "F#":"G♭", "G#":"A♭", "A#":"B♭" };
 let useFlat = false;
-let useHorizontal = false;
+let useHorizontal = true;
 
 const FINGER_COLORS = ["", "#2176ae", "#c0392b", "#27ae60", "#e67e22"];
 
@@ -1337,6 +1337,11 @@ function makeText(str, x, y, fill, fontSize, bold = false) {
 }
 
 buildButtons();
+
+// 初期状態：横向きをデフォルトに
+document.getElementById("orientToggle").classList.add("horiz-mode");
+document.getElementById("orientToggle").textContent = "横向き ✓";
+document.body.classList.add("horiz-mode");
 
 // 初期表示：Cメジャー
 selectedRoot = "C";
