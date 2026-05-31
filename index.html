@@ -459,7 +459,6 @@
       justify-content: center;
       page-break-inside: avoid;
       break-inside: avoid;
-      zoom: 0.90;
     }
     body.print-sheet-only .sheet-card {
       box-shadow: none;
@@ -470,10 +469,9 @@
     }
     body.print-sheet-only .sheet-card-remove { display: none; }
     body.print-sheet-only .chord-name { font-size: 1.1rem; margin-bottom: 1px; }
-    /* 横向きモードは3列 + 少し縮小 */
+    /* 横向きモードは3列 */
     body.print-sheet-only.horiz-mode .sheet-grid {
       grid-template-columns: repeat(3, auto);
-      zoom: 0.94;
     }
   }
 </style>
@@ -1036,7 +1034,7 @@ function render() {
 
     const posEl = document.createElement("div");
     posEl.className = "chord-position";
-    posEl.textContent = chord.label + (chord.baseFret > 1 ? `（${chord.baseFret}fr）` : "");
+    posEl.textContent = chord.label;
     card.appendChild(posEl);
 
     card.appendChild(useHorizontal ? drawDiagramH(chord, selectedRoot) : drawDiagram(chord, selectedRoot));
