@@ -984,7 +984,7 @@ function toggleFlat() {
 function toggleOrientation() {
   useHorizontal = !useHorizontal;
   document.getElementById("orientToggle").classList.toggle("horiz-mode", useHorizontal);
-  document.getElementById("orientToggle").textContent = useHorizontal ? "横向き ✓" : "縦 / 横";
+  document.getElementById("orientToggle").textContent = useHorizontal ? "縦向きに切替" : "横向きに切替";
   document.body.classList.toggle("horiz-mode", useHorizontal);
   render();
   renderSheet();
@@ -1340,7 +1340,7 @@ buildButtons();
 
 // 初期状態：横向きをデフォルトに
 document.getElementById("orientToggle").classList.add("horiz-mode");
-document.getElementById("orientToggle").textContent = "横向き ✓";
+document.getElementById("orientToggle").textContent = "縦向きに切替";
 document.body.classList.add("horiz-mode");
 
 // 初期表示：Cメジャー
