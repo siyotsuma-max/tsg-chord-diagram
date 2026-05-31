@@ -982,6 +982,7 @@ function toggleOrientation() {
   document.getElementById("orientToggle").classList.toggle("horiz-mode", useHorizontal);
   document.getElementById("orientToggle").textContent = useHorizontal ? "横向き ✓" : "縦 / 横";
   render();
+  renderSheet();
 }
 
 function updateActive(groupId, value, attr) {
@@ -1099,7 +1100,7 @@ function renderSheet() {
       card.appendChild(posEl);
     }
 
-    card.appendChild(drawDiagram(item.chord, item.root, true));
+    card.appendChild(useHorizontal ? drawDiagramH(item.chord, item.root, true) : drawDiagram(item.chord, item.root, true));
     grid.appendChild(card);
   });
 }
