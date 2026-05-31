@@ -1249,26 +1249,33 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const symbolX = compact ? MARGIN_LEFT - 15 : MARGIN_LEFT - 20;
   const openR   = compact ? 7 : 9;
 
+  const rootSemitone   = rootNote != null ? ROOT_SEMITONES[rootNote] : null;
+  const openR2         = compact ? 11 : 14;
   const fingerFontSize = compact ? "0.58rem" : "0.75rem";
   const fingerYOffset  = compact ? 3.5 : 4.5;
 
   frets.forEach((fret, i) => {
     const y = MARGIN_TOP + i * STRING_SPACING;
+    const actualPitch = fret === 0 ? OPEN_STRINGS[i] : (OPEN_STRINGS[i] + baseFret - 1 + fret);
+    const isRoot = rootSemitone != null && fret !== -1 && (actualPitch % 12) === rootSemitone;
+
     if (fret === -1) {
       svg.appendChild(makeX(symbolX, y, "#999"));
     } else if (fret === 0) {
       svg.appendChild(makeCircleOpen(symbolX, y, openR, "#555"));
+      if (isRoot) svg.appendChild(makeCircleOpen(symbolX, y, openR2, "#555"));
     } else {
-      // 押弦ドット: x=フレット中央, y=弦の位置
+      // 押弦ドット
       const x = MARGIN_LEFT + (fret - 0.5) * FRET_SPACING;
       const finger = fingers[i];
       const color = FINGER_COLORS[finger] || "#ccc";
+      if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 4 : 6), color));
+      if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 2 : 3), "#fff"));
       svg.appendChild(makeCircleFill(x, y, DOT_R, color));
       if (finger > 0) {
         svg.appendChild(makeText(String(finger), x, y + fingerYOffset, "#fff", fingerFontSize, true));
       }
     }
-    // ルート音二重丸は次のステップで追加
   });
 
   return svg;
