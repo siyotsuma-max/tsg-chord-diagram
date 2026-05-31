@@ -1024,7 +1024,7 @@ function render() {
     posEl.textContent = chord.label + (chord.baseFret > 1 ? `（${chord.baseFret}fr）` : "");
     card.appendChild(posEl);
 
-    card.appendChild(drawDiagram(chord, selectedRoot));
+    card.appendChild(useHorizontal ? drawDiagramH(chord, selectedRoot) : drawDiagram(chord, selectedRoot));
 
     const addBtn = document.createElement("button");
     addBtn.className = "add-btn";
@@ -1191,6 +1191,52 @@ function drawDiagram(chord, rootNote, compact = false) {
     }
   });
 
+  return svg;
+}
+
+// ===== 横向きダイアグラム（Step2: グリッドのみ） =====
+function drawDiagramH(chord, rootNote, compact = false) {
+  const NUM_STRINGS = 6;
+  const NUM_FRETS = 5;
+  const STRING_SPACING = compact ? 24 : 32; // 弦と弦の間隔（縦方向）
+  const FRET_SPACING   = compact ? 27 : 36; // フレットとフレットの間隔（横方向）
+  const MARGIN_LEFT = compact ? 30 : 40;    // 左マージン（×○記号用スペース）
+  const MARGIN_TOP  = compact ? 10 : 14;    // 上マージン
+  const DOT_R = compact ? 9 : 12;
+
+  // svgサイズ: 横=左マージン+フレット幅, 縦=上マージン+弦間隔×5
+  const svgW = MARGIN_LEFT + FRET_SPACING * NUM_FRETS + 20;
+  const svgH = MARGIN_TOP  + STRING_SPACING * (NUM_STRINGS - 1) + 20;
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", svgW);
+  svg.setAttribute("height", svgH);
+  svg.style.display = "block";
+
+  const baseFret = chord.baseFret;
+
+  // ナット（1fr時のみ左端に太い縦線）
+  if (baseFret === 1) {
+    svg.appendChild(makeLine(
+      MARGIN_LEFT, MARGIN_TOP,
+      MARGIN_LEFT, MARGIN_TOP + STRING_SPACING * (NUM_STRINGS - 1),
+      "#1a1a2e", 5
+    ));
+  }
+
+  // フレット線（縦線）
+  for (let f = 0; f <= NUM_FRETS; f++) {
+    const x = MARGIN_LEFT + f * FRET_SPACING;
+    svg.appendChild(makeLine(x, MARGIN_TOP, x, MARGIN_TOP + STRING_SPACING * (NUM_STRINGS - 1), "#ccc", 1));
+  }
+
+  // 弦（横線）: index0=6弦=上, index5=1弦=下
+  for (let s = 0; s < NUM_STRINGS; s++) {
+    const y = MARGIN_TOP + s * STRING_SPACING;
+    svg.appendChild(makeLine(MARGIN_LEFT, y, MARGIN_LEFT + FRET_SPACING * NUM_FRETS, y, "#999", 1.5));
+  }
+
+  // ※ 記号・ドットは次のステップで追加
   return svg;
 }
 
