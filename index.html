@@ -213,6 +213,27 @@
     color: #fff;
   }
 
+  .orient-toggle {
+    padding: 7px 12px;
+    border: 1.5px solid #888;
+    background: #fff;
+    color: #555;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.12s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+  }
+  .orient-toggle:hover { background: #f0f2f5; }
+  .orient-toggle.horiz-mode {
+    background: #6c3483;
+    border-color: #6c3483;
+    color: #fff;
+  }
+
   /* ====== Add button ====== */
   .add-btn {
     margin-top: 10px;
@@ -507,6 +528,7 @@
   <div class="ctrl-row">
     <span class="ctrl-label">コードタイプ</span>
     <div class="btn-group" id="typeBtns"></div>
+    <button class="orient-toggle" id="orientToggle" onclick="toggleOrientation()">縦 / 横</button>
   </div>
 </div>
 
@@ -910,6 +932,7 @@ const TYPES = [
 
 const FLAT_NAMES = { "C#":"D♭", "D#":"E♭", "F#":"G♭", "G#":"A♭", "A#":"B♭" };
 let useFlat = false;
+let useHorizontal = false;
 
 const FINGER_COLORS = ["", "#2176ae", "#c0392b", "#27ae60", "#e67e22"];
 
@@ -951,6 +974,13 @@ function toggleFlat() {
     const r = btn.dataset.root;
     btn.textContent = (useFlat && FLAT_NAMES[r]) ? FLAT_NAMES[r] : r;
   });
+  render();
+}
+
+function toggleOrientation() {
+  useHorizontal = !useHorizontal;
+  document.getElementById("orientToggle").classList.toggle("horiz-mode", useHorizontal);
+  document.getElementById("orientToggle").textContent = useHorizontal ? "横向き ✓" : "縦 / 横";
   render();
 }
 
