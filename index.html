@@ -444,27 +444,36 @@
     body.print-sheet-only .controls,
     body.print-sheet-only .diagrams-area,
     body.print-sheet-only .finger-legend-main { display: none; }
-    body.print-sheet-only .sheet-section { margin-top: 0; }
+    body.print-sheet-only .sheet-section {
+      margin-top: 0;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
     body.print-sheet-only .sheet-header { margin-bottom: 8px; }
     body.print-sheet-only .sheet-count { display: none; }
     body.print-sheet-only .sheet-actions { display: none; }
     body.print-sheet-only .sheet-grid {
       display: grid;
       grid-template-columns: repeat(4, auto);
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      zoom: 0.82;
     }
     body.print-sheet-only .sheet-card {
       box-shadow: none;
       border: 1px solid #ddd;
       page-break-inside: avoid;
-      padding: 6px 8px 8px;
+      break-inside: avoid;
+      padding: 5px 7px 7px;
     }
     body.print-sheet-only .sheet-card-remove { display: none; }
     body.print-sheet-only .chord-name { font-size: 1.1rem; margin-bottom: 1px; }
-    /* 横向きモードは3列（横幅が広いカードのためA4に合わせる） */
+    /* 横向きモードは3列 + 少し縮小 */
     body.print-sheet-only.horiz-mode .sheet-grid {
       grid-template-columns: repeat(3, auto);
+      zoom: 0.88;
     }
   }
 </style>
