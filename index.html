@@ -1215,16 +1215,14 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const NUM_FRETS = 5;
   const STRING_SPACING = compact ? 24 : 32; // 弦と弦の間隔（縦方向）
   const FRET_SPACING   = compact ? 27 : 36; // フレットとフレットの間隔（横方向）
-  const MARGIN_LEFT = compact ? 30 : 40;    // 左マージン（×○記号用スペース）
-  // baseFret>1のときフレット番号ラベルを上に出すため余白を確保
-  const MARGIN_TOP  = chord.baseFret > 1
-    ? (compact ? 18 : 24)
-    : (compact ? 10 : 14);
+  const MARGIN_LEFT  = compact ? 30 : 40;  // 左マージン（×○記号用スペース）
+  const MARGIN_TOP   = compact ? 10 : 14;  // 上マージン（常に一定）
+  const MARGIN_BOTTOM = compact ? 20 : 26; // 下マージン（frラベル用スペースを確保）
   const DOT_R = compact ? 9 : 12;
 
-  // svgサイズ: 横=左マージン+フレット幅, 縦=上マージン+弦間隔×5
+  // svgサイズ: 横=左マージン+フレット幅, 縦=上マージン+弦間隔×5+下マージン
   const svgW = MARGIN_LEFT + FRET_SPACING * NUM_FRETS + 20;
-  const svgH = MARGIN_TOP  + STRING_SPACING * (NUM_STRINGS - 1) + 20;
+  const svgH = MARGIN_TOP  + STRING_SPACING * (NUM_STRINGS - 1) + MARGIN_BOTTOM;
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", svgW);
@@ -1257,10 +1255,11 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const frets   = chord.frets;
   const fingers = chord.fingers;
 
-  // ベースフレット番号（2fr以上はグリッド左上に表示）
+  // ベースフレット番号（2fr以上はグリッド下に表示）
   if (baseFret > 1) {
     const frFontSize = compact ? "0.55rem" : "0.72rem";
-    svg.appendChild(makeText(baseFret + "fr", MARGIN_LEFT + FRET_SPACING * 0.5, MARGIN_TOP - 5, "#888", frFontSize));
+    const frY = MARGIN_TOP + STRING_SPACING * (NUM_STRINGS - 1) + (compact ? 13 : 17);
+    svg.appendChild(makeText(baseFret + "fr", MARGIN_LEFT + FRET_SPACING * 0.5, frY, "#888", frFontSize));
   }
 
   // 記号（×ミュート・○開放弦）を左側に縦並びで配置
