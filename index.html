@@ -349,16 +349,16 @@
   .sheet-actions { display: flex; gap: 8px; }
   .clear-btn {
     padding: 9px 16px;
-    background: #f0f2f5;
-    border: 1.5px solid #ddd;
+    background: #fff0f0;
+    border: 1.5px solid #f5a8a8;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #555;
+    color: #c0392b;
     cursor: pointer;
     transition: 0.12s;
   }
-  .clear-btn:hover { background: #e5e8ee; }
+  .clear-btn:hover { background: #fdd; border-color: #e07070; }
 
   .sheet-grid {
     display: grid;
@@ -995,7 +995,7 @@
       <input type="text" id="sheetTitleInput" class="sheet-title-input" placeholder="タイトルを入力（印刷に反映）" maxlength="40">
     </div>
     <div class="sheet-actions">
-      <button class="clear-btn" onclick="clearSheet()">全消去</button>
+      <button class="clear-btn" onclick="clearSheet()">🗑 コード全消去</button>
       <button class="print-btn" onclick="printSheet()">🖨 コード表を印刷</button>
     </div>
   </div>
