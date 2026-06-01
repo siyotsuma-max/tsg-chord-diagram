@@ -52,6 +52,35 @@
   .print-btn:hover { background: #2e2e50; }
   .print-btn:active { transform: scale(0.97); }
 
+  /* ====== 2列レイアウト（広い画面用） ====== */
+  .main-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .left-col {
+    min-width: 0;
+  }
+  @media (min-width: 1100px) {
+    .main-layout {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .left-col {
+      flex: 0 0 auto;
+      width: 480px;
+    }
+    .sheet-section {
+      flex: 1 1 0;
+      min-width: 0;
+      margin-top: 0 !important;
+    }
+    .sheet-grid {
+      grid-template-columns: repeat(4, auto) !important;
+    }
+  }
+
   /* ====== Controls panel ====== */
   .controls {
     background: #fff;
@@ -235,8 +264,13 @@
   }
 
   /* ====== Add button ====== */
-  .add-btn {
+  .add-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-top: 10px;
+  }
+  .add-btn {
     padding: 9px 20px;
     background: #27ae60;
     color: #fff;
@@ -251,6 +285,42 @@
   .add-btn:hover { background: #219a52; }
   .add-btn:active { transform: scale(0.97); }
   .add-btn:disabled { background: #bbb; cursor: default; transform: none; }
+  .add-hint {
+    font-size: 0.75rem;
+    color: #aaa;
+    white-space: nowrap;
+  }
+  .add-hint kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #f5f5f5;
+    color: #888;
+    font-size: 0.72rem;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+
+  /* ====== Play button ====== */
+  .play-btn {
+    margin-top: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid #2176ae;
+    background: #fff;
+    color: #2176ae;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .play-btn:hover { background: #2176ae; color: #fff; }
+  .play-btn:active { transform: scale(0.93); }
 
   /* ====== Chord Sheet ====== */
   .sheet-section {
@@ -443,11 +513,11 @@
     body.print-sheet-only header,
     body.print-sheet-only .controls,
     body.print-sheet-only .diagrams-area,
-    body.print-sheet-only .finger-legend-main { display: none; }
+    body.print-sheet-only .finger-legend-main,
+    body.print-sheet-only .left-col { display: none; }
+    body.print-sheet-only .main-layout { display: block; }
     body.print-sheet-only .sheet-section {
       margin-top: 0;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
     body.print-sheet-only .sheet-header { margin-bottom: 8px; }
     body.print-sheet-only .sheet-count { display: none; }
@@ -457,8 +527,6 @@
       grid-template-columns: repeat(4, auto);
       gap: 8mm;
       justify-content: center;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
     body.print-sheet-only .sheet-card {
       box-shadow: none;
@@ -472,6 +540,14 @@
     /* 横向きモードは3列 */
     body.print-sheet-only.horiz-mode .sheet-grid {
       grid-template-columns: repeat(3, auto);
+    }
+    /* 13個以上はA4一枚に収まるよう縮小・4列固定 */
+    body.print-sheet-only.print-many .sheet-section {
+      zoom: 0.85;
+    }
+    body.print-sheet-only.print-many .sheet-grid {
+      grid-template-columns: repeat(4, auto) !important;
+      gap: 5mm;
     }
   }
 </style>
@@ -490,6 +566,11 @@
   <div class="modal">
     <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('open')">✕</button>
     <div class="modal-title">💡 これ、知ってましたか？</div>
+
+    <div class="help-section">
+      <h3>⌨️ Enterキーでコード表に追加できます</h3>
+      <p>ルート音とコードタイプを選んだあと、<strong>Enterキー</strong>を押すだけでマイコード表に追加できます。いちいちボタンをクリックしなくてOKです。</p>
+    </div>
 
     <div class="help-section">
       <h3>🎸 ルート音は♭表記に切り替えられます</h3>
@@ -514,22 +595,20 @@
 
     <div class="help-section">
       <h3>📋 よく使うコードをまとめて印刷できます</h3>
-      <p>「＋ コード表に追加」ボタンで気に入ったコードをストックできます（最大12個）。「コード表を印刷」でマイコード表だけを印刷・PDF保存できるので、練習メモとして活用してください。</p>
+      <p>「＋ コード表に追加」ボタンで気に入ったコードをストックできます（最大16個）。「コード表を印刷」でマイコード表だけを印刷・PDF保存できるので、練習メモとして活用してください。</p>
       <p style="margin-top:8px;padding:8px 12px;background:#fff5f5;border-left:3px solid #c0392b;border-radius:0 6px 6px 0;color:#c0392b;font-weight:700;font-size:0.85rem;">🖨 印刷・PDF保存に対応しています！<br><span style="font-weight:400;color:#555;">ブラウザの印刷機能（Ctrl+P）またはページ上部の「印刷 / PDF」ボタンから出力できます。</span><br><span style="font-weight:400;color:#555;">📄 PDFで保存したい場合は、印刷ダイアログが開いたら「プリンター」の選択欄で <strong>「PDFに保存」</strong> を選んでください。スマホ・PCどちらのブラウザでも対応しています。</span></p>
     </div>
 
     <div class="help-section">
-      <h3>📐 9個以上になると自動で小さくなります</h3>
-      <p>マイコード表に9個目を追加した時点で、表示が自動的にコンパクトサイズに切り替わります。最大12個まで1枚にまとめられます。</p>
+      <h3>📐 最大16個まで追加できます</h3>
+      <p>マイコード表には最大16個までコードを追加できます。4列×4行で1画面にまとめて表示されます。</p>
     </div>
 
-    <div class="help-section">
-      <h3>🎵 dim コードは3種類だけ覚えればOK</h3>
-      <p>ディミニッシュコードは構造上、12のルート音が3種類のフォームに分類されます。このアプリではA・B・Cフォームとして整理しているので、3つ覚えるだけで全キーに対応できます。</p>
-    </div>
   </div>
 </div>
 
+<div class="main-layout">
+<div class="left-col">
 <div class="controls">
   <div class="ctrl-row">
     <span class="ctrl-label">ルート音</span>
@@ -553,6 +632,7 @@
   <span><span class="legend-dot" style="background:#27ae60"></span> 薬指（3）</span>
   <span><span class="legend-dot" style="background:#e67e22"></span> 小指（4）</span>
 </div>
+</div><!-- /left-col -->
 
 <!-- マイコード表 -->
 <div class="sheet-section" id="sheetSection">
@@ -567,9 +647,10 @@
     </div>
   </div>
   <div class="sheet-grid" id="sheetGrid">
-    <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大8個）</div>
+    <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
-</div>
+</div><!-- /sheet-section -->
+</div><!-- /main-layout -->
 
 <script>
 // ===== コードデータ =====
@@ -955,6 +1036,88 @@ let selectedRoot = null;
 let selectedType = null;
 let myChords = [];
 
+// ===== 音源（Karplus-Strong ギター音） =====
+// ギター開放弦のMIDI番号（6弦〜1弦）
+const OPEN_MIDI = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
+
+let audioCtx = null;
+let chordPlayTimeout = null;
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function pluckNote(freq, startTime) {
+  const sampleRate = audioCtx.sampleRate;
+  const duration = 5.0;
+  const totalSamples = Math.floor(sampleRate * duration);
+  const delayLen = Math.max(2, Math.round(sampleRate / freq));
+
+  const delayLine = new Float32Array(delayLen);
+  for (let i = 0; i < delayLen; i++) delayLine[i] = Math.random() * 2 - 1;
+
+  const output = new Float32Array(totalSamples);
+  let pos = 0;
+  for (let i = 0; i < totalSamples; i++) {
+    const next = (pos + 1) % delayLen;
+    output[i] = delayLine[pos];
+    delayLine[pos] = (delayLine[pos] + delayLine[next]) * 0.4992;
+    pos = next;
+  }
+
+  const buf = audioCtx.createBuffer(1, totalSamples, sampleRate);
+  buf.getChannelData(0).set(output);
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.7, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(startTime);
+  src.stop(startTime + duration);
+}
+
+function playChord(chord) {
+  stopChord();
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const { frets, baseFret } = chord;
+  const interval = 0.18; // 弦と弦の間隔（秒）
+  const now = audioCtx.currentTime + 0.05;
+
+  let idx = 0;
+  frets.forEach((fret, i) => {
+    if (fret === -1) return; // ミュート弦はスキップ
+    const midi = fret === 0
+      ? OPEN_MIDI[i]
+      : OPEN_MIDI[i] + (baseFret - 1) + fret;
+    pluckNote(midiToFreq(midi), now + idx * interval);
+    idx++;
+  });
+
+  // 再生終了後にボタンをリセット
+  const totalMs = (idx * interval + 5.0) * 1000;
+  chordPlayTimeout = setTimeout(() => {
+    const btn = document.getElementById('chordPlayBtn');
+    if (btn) { btn.textContent = '▶'; btn.dataset.playing = ''; }
+  }, totalMs);
+
+  const btn = document.getElementById('chordPlayBtn');
+  if (btn) { btn.textContent = '■'; btn.dataset.playing = '1'; }
+}
+
+function stopChord() {
+  if (chordPlayTimeout) { clearTimeout(chordPlayTimeout); chordPlayTimeout = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  const btn = document.getElementById('chordPlayBtn');
+  if (btn) { btn.textContent = '▶'; btn.dataset.playing = ''; }
+}
+
 // ===== UIセットアップ =====
 function buildButtons() {
   const rb = document.getElementById("rootBtns");
@@ -1032,19 +1195,40 @@ function render() {
     nameEl.textContent = chordName;
     card.appendChild(nameEl);
 
-    const posEl = document.createElement("div");
-    posEl.className = "chord-position";
-    posEl.textContent = chord.label;
-    card.appendChild(posEl);
-
     card.appendChild(useHorizontal ? drawDiagramH(chord, selectedRoot) : drawDiagram(chord, selectedRoot));
+
+    const addRow = document.createElement("div");
+    addRow.className = "add-btn-row";
 
     const addBtn = document.createElement("button");
     addBtn.className = "add-btn";
+    addBtn.id = "addBtn";
     addBtn.textContent = "＋ コード表に追加";
-    addBtn.disabled = myChords.length >= 12;
+    addBtn.disabled = myChords.length >= 16;
     addBtn.onclick = () => addToSheet(selectedRoot, selectedType, chord, chordName);
-    card.appendChild(addBtn);
+    addRow.appendChild(addBtn);
+
+    const hint = document.createElement("span");
+    hint.className = "add-hint";
+    hint.innerHTML = '<kbd>↵ Enter</kbd>';
+    addRow.appendChild(hint);
+
+    card.appendChild(addRow);
+
+    // 再生ボタン
+    const playBtn = document.createElement("button");
+    playBtn.className = "play-btn";
+    playBtn.id = "chordPlayBtn";
+    playBtn.title = "コードを試聴";
+    playBtn.textContent = "▶";
+    playBtn.onclick = () => {
+      if (playBtn.dataset.playing) {
+        stopChord();
+      } else {
+        playChord(chord);
+      }
+    };
+    card.appendChild(playBtn);
 
     area.appendChild(card);
   });
@@ -1052,7 +1236,7 @@ function render() {
 
 // ===== マイコード表 =====
 function addToSheet(root, type, chord, chordName) {
-  if (myChords.length >= 12) return;
+  if (myChords.length >= 16) return;
   myChords.push({ root, type, chord, chordName });
   renderSheet();
   render(); // 追加ボタンのdisabled状態を更新
@@ -1072,8 +1256,10 @@ function clearSheet() {
 
 function printSheet() {
   document.body.classList.add("print-sheet-only");
+  if (myChords.length > 12) document.body.classList.add("print-many");
   window.onafterprint = () => {
     document.body.classList.remove("print-sheet-only");
+    document.body.classList.remove("print-many");
     window.onafterprint = null;
   };
   window.print();
@@ -1082,10 +1268,10 @@ function printSheet() {
 function renderSheet() {
   const grid = document.getElementById("sheetGrid");
   const count = document.getElementById("sheetCount");
-  count.textContent = `${myChords.length} / 12`;
+  count.textContent = `${myChords.length} / 16`;
 
   if (myChords.length === 0) {
-    grid.innerHTML = '<div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大12個）</div>';
+    grid.innerHTML = '<div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>';
     return;
   }
 
@@ -1214,7 +1400,7 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const STRING_SPACING = compact ? 24 : 32; // 弦と弦の間隔（縦方向）
   const FRET_SPACING   = compact ? 27 : 36; // フレットとフレットの間隔（横方向）
   const MARGIN_LEFT  = compact ? 30 : 40;  // 左マージン（×○記号用スペース）
-  const MARGIN_TOP   = compact ? 10 : 14;  // 上マージン（常に一定）
+  const MARGIN_TOP   = compact ? 14 : 18;  // 上マージン（常に一定）
   const MARGIN_BOTTOM = compact ? 20 : 26; // 下マージン（frラベル用スペースを確保）
   const DOT_R = compact ? 9 : 12;
 
@@ -1355,6 +1541,17 @@ selectedType = "major";
 updateActive("rootBtns", "C", "root");
 updateActive("typeBtns", "major", "type");
 render();
+
+// Enterキーでコード表に追加
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  // モーダルが開いている場合はスキップ
+  if (document.getElementById("helpModal").classList.contains("open")) return;
+  // 入力フィールドにフォーカスがある場合はスキップ
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  const btn = document.getElementById("addBtn");
+  if (btn && !btn.disabled) btn.click();
+});
 </script>
 </body>
 </html>
