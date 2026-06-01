@@ -974,16 +974,6 @@
   <div class="sheet-grid" id="sheetGrid">
     <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
-  <!-- マイライブラリ -->
-  <div class="library-section" id="librarySection">
-    <div class="library-header">
-      <span class="slots-title" style="margin:0;">📚 マイライブラリ</span>
-      <button class="library-new-btn" onclick="openEditor(null)">＋ 新規作成</button>
-    </div>
-    <div class="library-empty" id="libraryEmpty">作成したカスタムコードがここに表示されます</div>
-    <div class="library-grid" id="libraryGrid"></div>
-  </div>
-
   <!-- 保存スロット -->
   <div class="slots-section" id="slotsSection">
     <div class="slots-title">💾 保存スロット</div>
@@ -993,6 +983,23 @@
       <label class="slot-io-btn" style="cursor:pointer;">
         📥 インポート
         <input type="file" accept=".json" style="display:none" onchange="importSlots(event)">
+      </label>
+    </div>
+  </div>
+
+  <!-- カスタムコード作成ライブラリ -->
+  <div class="library-section" id="librarySection">
+    <div class="library-header">
+      <span class="slots-title" style="margin:0;">🎸 カスタムコード作成ライブラリ</span>
+      <button class="library-new-btn" onclick="openEditor(null)">＋ 新規作成</button>
+    </div>
+    <div class="library-empty" id="libraryEmpty">作成したカスタムコードがここに表示されます</div>
+    <div class="library-grid" id="libraryGrid"></div>
+    <div class="slots-io">
+      <button class="slot-io-btn" onclick="exportLibrary()">📤 ライブラリをエクスポート</button>
+      <label class="slot-io-btn" style="cursor:pointer;">
+        📥 インポート
+        <input type="file" accept=".json" style="display:none" onchange="importLibrary(event)">
       </label>
     </div>
   </div>
@@ -1523,6 +1530,36 @@ function renderLibrary() {
     card.appendChild(actions);
     grid.appendChild(card);
   });
+}
+
+function exportLibrary() {
+  const json = JSON.stringify(library, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tsg-custom-library-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importLibrary(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      if (!confirm('インポートするとライブラリが上書きされます。よろしいですか？')) return;
+      library = data;
+      saveLibrary();
+      renderLibrary();
+      alert('インポート完了しました！');
+    } catch {
+      alert('ファイルの形式が正しくありません。');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ===== エディター =====
