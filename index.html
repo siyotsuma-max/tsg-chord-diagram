@@ -1249,6 +1249,7 @@ function renderSlots() {
       if (!d) return;
       if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return;
       myChords = d.chords;
+      saveCurrentSheet();
       renderSheet();
     };
 
@@ -1426,21 +1427,30 @@ function render() {
 }
 
 // ===== マイコード表 =====
+const CURRENT_KEY = 'tsg-chord-current';
+
+function saveCurrentSheet() {
+  localStorage.setItem(CURRENT_KEY, JSON.stringify(myChords));
+}
+
 function addToSheet(root, type, chord, chordName) {
   if (myChords.length >= 16) return;
   myChords.push({ root, type, chord, chordName });
+  saveCurrentSheet();
   renderSheet();
-  render(); // 追加ボタンのdisabled状態を更新
+  render();
 }
 
 function removeFromSheet(idx) {
   myChords.splice(idx, 1);
+  saveCurrentSheet();
   renderSheet();
   render();
 }
 
 function clearSheet() {
   myChords = [];
+  saveCurrentSheet();
   renderSheet();
   render();
 }
@@ -1729,9 +1739,16 @@ document.body.classList.add("horiz-mode");
 // 初期表示：Cメジャー
 selectedRoot = "C";
 selectedType = "major";
+// 前回のコード表を自動復元
+try {
+  const saved = localStorage.getItem(CURRENT_KEY);
+  if (saved) myChords = JSON.parse(saved);
+} catch {}
+
 updateActive("rootBtns", "C", "root");
 updateActive("typeBtns", "major", "type");
 render();
+renderSheet();
 renderSlots();
 
 // Enterキーでコード表に追加
