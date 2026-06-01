@@ -778,6 +778,11 @@
     transition: 0.12s;
   }
   .slot-io-btn:hover { background: #e9ecef; }
+  .slots-io-hint {
+    margin-top: 6px;
+    font-size: 0.76rem;
+    color: #aaa;
+  }
 
   /* ====== Print ====== */
   @media print {
@@ -885,7 +890,7 @@
 
     <div class="help-section">
       <h3>💾 コード表を保存・呼び出しできます</h3>
-      <p>画面下の「保存スロット」に曲名をつけて最大4曲分のコード表を保存できます。「読込」で即座に切り替えられます。別のPCやバックアップ用には「エクスポート」でJSONファイルに書き出し、「インポート」で復元できます。</p>
+      <p>「<strong>保存する</strong>」で今のコード表をスロットに記憶、「<strong>呼び出す</strong>」で即座に切り替えられます（ファイル不要）。別のデバイスへの移行やバックアップには「<strong>エクスポート</strong>」でファイルに書き出し、「<strong>インポート</strong>」でファイルから復元します。</p>
     </div>
 
     <div class="help-section">
@@ -976,7 +981,7 @@
   </div>
   <!-- 保存スロット -->
   <div class="slots-section" id="slotsSection">
-    <div class="slots-title">💾 保存スロット</div>
+    <div class="slots-title">💾 マイコード表　保存スロット</div>
     <div id="slotRows"></div>
     <div class="slots-io">
       <button class="slot-io-btn" onclick="exportSlots()">📤 全スロットをエクスポート</button>
@@ -985,6 +990,7 @@
         <input type="file" accept=".json" style="display:none" onchange="importSlots(event)">
       </label>
     </div>
+    <div class="slots-io-hint">ファイルに書き出して他のデバイスへの移行やバックアップができます</div>
   </div>
 
   <!-- カスタムコード作成ライブラリ -->
@@ -1002,6 +1008,7 @@
         <input type="file" accept=".json" style="display:none" onchange="importLibrary(event)">
       </label>
     </div>
+    <div class="slots-io-hint">ファイルに書き出して他のデバイスへの移行やバックアップができます</div>
   </div>
 
 </div><!-- /sheet-section -->
@@ -1708,7 +1715,7 @@ function renderSlots() {
 
     const saveBtn = document.createElement('button');
     saveBtn.className = 'slot-btn save';
-    saveBtn.textContent = '💾 保存';
+    saveBtn.textContent = '💾 保存する';
     saveBtn.onclick = () => {
       if (myChords.length === 0) { alert('コード表が空です。先にコードを追加してください。'); return; }
       localStorage.setItem(SLOT_KEY(i), JSON.stringify({ name: nameInput.value || `スロット ${i + 1}`, chords: myChords }));
@@ -1718,7 +1725,7 @@ function renderSlots() {
 
     const loadBtn = document.createElement('button');
     loadBtn.className = 'slot-btn load';
-    loadBtn.textContent = '📂 読込';
+    loadBtn.textContent = '📂 呼び出す';
     loadBtn.disabled = !data;
     loadBtn.onclick = () => {
       const d = loadSlotData(i);
