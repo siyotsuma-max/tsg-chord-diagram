@@ -506,6 +506,77 @@
   .help-badge.root { background: #c0392b; color: #fff; }
   .help-badge.type { background: #2176ae; color: #fff; }
 
+  /* ====== Save Slots ====== */
+  .slots-section {
+    margin-top: 18px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .slots-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .slot-row:last-child { margin-bottom: 0; }
+  .slot-name {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    color: #333;
+    min-width: 0;
+  }
+  .slot-name:focus { outline: none; border-color: #2176ae; }
+  .slot-btn {
+    padding: 6px 11px;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.12s;
+  }
+  .slot-btn.save  { background: #1a1a2e; color: #fff; }
+  .slot-btn.save:hover  { background: #2e2e50; }
+  .slot-btn.load  { background: #2176ae; color: #fff; }
+  .slot-btn.load:hover  { background: #1a5f8a; }
+  .slot-btn.del   { background: #f0f2f5; color: #c0392b; }
+  .slot-btn.del:hover   { background: #f5c6c6; }
+  .slot-btn:disabled { opacity: 0.35; cursor: default; }
+  .slots-io {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    flex-wrap: wrap;
+  }
+  .slot-io-btn {
+    padding: 6px 14px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    background: #f8f9fa;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #555;
+    transition: 0.12s;
+  }
+  .slot-io-btn:hover { background: #e9ecef; }
+
   /* ====== Print ====== */
   @media print {
     @page { margin: 10mm; }
@@ -514,7 +585,8 @@
     body.print-sheet-only .controls,
     body.print-sheet-only .diagrams-area,
     body.print-sheet-only .finger-legend-main,
-    body.print-sheet-only .left-col { display: none; }
+    body.print-sheet-only .left-col,
+    body.print-sheet-only .slots-section { display: none; }
     body.print-sheet-only .main-layout { display: block; }
     body.print-sheet-only .sheet-section {
       margin-top: 0;
@@ -600,6 +672,11 @@
     </div>
 
     <div class="help-section">
+      <h3>💾 コード表を保存・呼び出しできます</h3>
+      <p>画面下の「保存スロット」に曲名をつけて最大4曲分のコード表を保存できます。「読込」で即座に切り替えられます。別のPCやバックアップ用には「エクスポート」でJSONファイルに書き出し、「インポート」で復元できます。</p>
+    </div>
+
+    <div class="help-section">
       <h3>📐 最大16個まで追加できます</h3>
       <p>マイコード表には最大16個までコードを追加できます。4列×4行で1画面にまとめて表示されます。</p>
     </div>
@@ -649,6 +726,19 @@
   <div class="sheet-grid" id="sheetGrid">
     <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
+  <!-- 保存スロット -->
+  <div class="slots-section" id="slotsSection">
+    <div class="slots-title">💾 保存スロット</div>
+    <div id="slotRows"></div>
+    <div class="slots-io">
+      <button class="slot-io-btn" onclick="exportSlots()">📤 全スロットをエクスポート</button>
+      <label class="slot-io-btn" style="cursor:pointer;">
+        📥 インポート
+        <input type="file" accept=".json" style="display:none" onchange="importSlots(event)">
+      </label>
+    </div>
+  </div>
+
 </div><!-- /sheet-section -->
 </div><!-- /main-layout -->
 
@@ -1118,6 +1208,107 @@ function stopChord() {
   if (btn) { btn.textContent = '▶'; btn.dataset.playing = ''; }
 }
 
+// ===== 保存スロット =====
+const SLOT_COUNT = 4;
+const SLOT_KEY = (i) => `tsg-chord-slot-${i}`;
+
+function loadSlotData(i) {
+  try { return JSON.parse(localStorage.getItem(SLOT_KEY(i))); } catch { return null; }
+}
+
+function renderSlots() {
+  const container = document.getElementById('slotRows');
+  container.innerHTML = '';
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const data = loadSlotData(i);
+    const row = document.createElement('div');
+    row.className = 'slot-row';
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'slot-name';
+    nameInput.type = 'text';
+    nameInput.placeholder = `スロット ${i + 1}`;
+    nameInput.value = data ? data.name : '';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'slot-btn save';
+    saveBtn.textContent = '💾 保存';
+    saveBtn.onclick = () => {
+      if (myChords.length === 0) { alert('コード表が空です。先にコードを追加してください。'); return; }
+      localStorage.setItem(SLOT_KEY(i), JSON.stringify({ name: nameInput.value || `スロット ${i + 1}`, chords: myChords }));
+      alert(`スロット ${i + 1} に保存しました！`);
+      renderSlots();
+    };
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'slot-btn load';
+    loadBtn.textContent = '📂 読込';
+    loadBtn.disabled = !data;
+    loadBtn.onclick = () => {
+      const d = loadSlotData(i);
+      if (!d) return;
+      if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return;
+      myChords = d.chords;
+      renderSheet();
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'slot-btn del';
+    delBtn.textContent = '🗑';
+    delBtn.disabled = !data;
+    delBtn.onclick = () => {
+      if (!confirm(`スロット ${i + 1} を削除しますか？`)) return;
+      localStorage.removeItem(SLOT_KEY(i));
+      renderSlots();
+    };
+
+    row.appendChild(nameInput);
+    row.appendChild(saveBtn);
+    row.appendChild(loadBtn);
+    row.appendChild(delBtn);
+    container.appendChild(row);
+  }
+}
+
+function exportSlots() {
+  const allSlots = [];
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    allSlots.push(loadSlotData(i));
+  }
+  const json = JSON.stringify(allSlots, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tsg-chord-slots-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importSlots(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const allSlots = JSON.parse(e.target.result);
+      if (!Array.isArray(allSlots)) throw new Error();
+      if (!confirm('インポートすると全スロットが上書きされます。よろしいですか？')) return;
+      for (let i = 0; i < SLOT_COUNT; i++) {
+        if (allSlots[i]) {
+          localStorage.setItem(SLOT_KEY(i), JSON.stringify(allSlots[i]));
+        } else {
+          localStorage.removeItem(SLOT_KEY(i));
+        }
+      }
+      renderSlots();
+      alert('インポート完了しました！');
+    } catch {
+      alert('ファイルの形式が正しくありません。');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 // ===== UIセットアップ =====
 function buildButtons() {
   const rb = document.getElementById("rootBtns");
@@ -1541,6 +1732,7 @@ selectedType = "major";
 updateActive("rootBtns", "C", "root");
 updateActive("typeBtns", "major", "type");
 render();
+renderSlots();
 
 // Enterキーでコード表に追加
 document.addEventListener("keydown", (e) => {
