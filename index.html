@@ -506,6 +506,21 @@
   .help-badge.root { background: #c0392b; color: #fff; }
   .help-badge.type { background: #2176ae; color: #fff; }
 
+  /* ====== Sheet title input ====== */
+  .sheet-title-input {
+    padding: 4px 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    color: #333;
+    width: 200px;
+    min-width: 0;
+  }
+  .sheet-title-input:focus { outline: none; border-color: #2176ae; }
+  .sheet-print-title {
+    display: none; /* 画面では非表示 */
+  }
+
   /* ====== Save Slots ====== */
   .slots-section {
     margin-top: 18px;
@@ -591,9 +606,18 @@
     body.print-sheet-only .sheet-section {
       margin-top: 0;
     }
-    body.print-sheet-only .sheet-header { margin-bottom: 8px; }
+    body.print-sheet-only .sheet-header { margin-bottom: 4px; }
     body.print-sheet-only .sheet-count { display: none; }
     body.print-sheet-only .sheet-actions { display: none; }
+    body.print-sheet-only .sheet-title-input { display: none; }
+    body.print-sheet-only .sheet-print-title {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
     body.print-sheet-only .sheet-grid {
       display: grid;
       grid-template-columns: repeat(4, auto);
@@ -714,15 +738,18 @@
 <!-- マイコード表 -->
 <div class="sheet-section" id="sheetSection">
   <div class="sheet-header">
-    <div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span class="sheet-title">マイコード表</span>
       <span class="sheet-count" id="sheetCount">0 / 8</span>
+      <input type="text" id="sheetTitleInput" class="sheet-title-input" placeholder="タイトルを入力（印刷に反映）" maxlength="40">
     </div>
     <div class="sheet-actions">
       <button class="clear-btn" onclick="clearSheet()">全消去</button>
       <button class="print-btn" onclick="printSheet()">🖨 コード表を印刷</button>
     </div>
   </div>
+  <!-- 印刷時のみ表示するタイトル -->
+  <div class="sheet-print-title" id="sheetPrintTitle"></div>
   <div class="sheet-grid" id="sheetGrid">
     <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
@@ -1744,6 +1771,23 @@ try {
   const saved = localStorage.getItem(CURRENT_KEY);
   if (saved) myChords = JSON.parse(saved);
 } catch {}
+
+// タイトル入力の初期化
+const sheetTitleInput = document.getElementById('sheetTitleInput');
+const sheetPrintTitle = document.getElementById('sheetPrintTitle');
+const TITLE_KEY = 'tsg-chord-title';
+
+// 保存済みタイトルを復元
+const savedTitle = localStorage.getItem(TITLE_KEY) || '';
+sheetTitleInput.value = savedTitle;
+sheetPrintTitle.textContent = savedTitle;
+
+// 入力するたびに印刷用divとlocalStorageを更新
+sheetTitleInput.addEventListener('input', () => {
+  const t = sheetTitleInput.value;
+  sheetPrintTitle.textContent = t;
+  localStorage.setItem(TITLE_KEY, t);
+});
 
 updateActive("rootBtns", "C", "root");
 updateActive("typeBtns", "major", "type");
