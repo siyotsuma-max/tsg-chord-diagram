@@ -401,6 +401,9 @@
     transition: 0.1s;
   }
   .sheet-card-remove:hover { color: #c0392b; }
+  .sheet-card[draggable="true"] { cursor: grab; }
+  .sheet-card.dragging { opacity: 0.4; }
+  .sheet-card.drag-over { outline: 2px dashed #2176ae; outline-offset: 2px; }
 
   /* ====== Help Modal ====== */
   .help-btn {
@@ -1984,10 +1987,42 @@ function renderSheet() {
     return;
   }
 
+  let dragSrcIdx = null;
+
   grid.innerHTML = "";
   myChords.forEach((item, idx) => {
     const card = document.createElement("div");
     card.className = "sheet-card compact";
+    card.draggable = true;
+
+    // ドラッグ開始
+    card.addEventListener("dragstart", (e) => {
+      dragSrcIdx = idx;
+      card.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+      grid.querySelectorAll(".sheet-card").forEach(c => c.classList.remove("drag-over"));
+    });
+
+    // ドロップ先
+    card.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      grid.querySelectorAll(".sheet-card").forEach(c => c.classList.remove("drag-over"));
+      card.classList.add("drag-over");
+    });
+    card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (dragSrcIdx === null || dragSrcIdx === idx) return;
+      const moved = myChords.splice(dragSrcIdx, 1)[0];
+      myChords.splice(idx, 0, moved);
+      dragSrcIdx = null;
+      saveCurrentSheet();
+      renderSheet();
+    });
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "sheet-card-remove";
