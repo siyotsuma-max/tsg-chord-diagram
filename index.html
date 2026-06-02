@@ -437,6 +437,7 @@
     padding: 16px;
   }
   .modal-overlay.open { display: flex; }
+  .modal-overlay:focus { outline: none; }
 
   .modal {
     background: #fff;
@@ -643,20 +644,24 @@
     padding-left: 2px;
   }
   .editor-head-btn {
-    height: 30px;
+    height: 52px;
     border: 1px solid #ccc;
     border-radius: 6px;
     background: #f5f5f5;
-    font-size: 0.9rem;
+    font-size: 3rem;
     cursor: pointer;
     font-weight: 700;
     transition: 0.1s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .editor-head-btn:hover { background: #e9ecef; }
   .editor-board {
     display: grid;
     grid-template-columns: repeat(6, 44px);
-    grid-template-rows: repeat(5, 44px);
+    grid-template-rows: repeat(6, 44px);
     gap: 2px;
     border: 2px solid #1a1a2e;
     border-radius: 4px;
@@ -709,6 +714,29 @@
     border-radius: 8px;
     font-size: 0.95rem;
     cursor: pointer;
+  }
+
+  /* ====== 横向きエディター ====== */
+  .editor-board-wrap.horiz {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .editor-board-wrap.horiz .editor-string-heads {
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 0;
+    padding-left: 0;
+  }
+  .editor-board-wrap.horiz .editor-head-btn {
+    width: 44px;
+    height: 52px;
+  }
+  .editor-board-wrap.horiz .editor-board {
+    grid-template-columns: repeat(6, 44px);
+    grid-template-rows: repeat(6, 52px);
   }
 
   /* ====== Save Slots ====== */
@@ -932,12 +960,25 @@
 <div class="main-layout">
 <div class="left-col">
 <!-- カスタムコードエディター -->
-<div class="modal-overlay" id="customModal" onclick="if(event.target===this)closeEditor()">
+<div class="modal-overlay" id="customModal" tabindex="-1" onclick="if(event.target===this)closeEditor()">
   <div class="modal custom-modal">
     <button class="modal-close" onclick="closeEditor()">✕</button>
     <div class="modal-title">🎸 カスタムコードを作る</div>
     <div class="editor-name-row">
       <input type="text" id="editorName" class="editor-name-input" placeholder="コード名（例: Fシンプル）" maxlength="20">
+    </div>
+    <div class="editor-basefret-row" style="margin-bottom:6px;">
+      <span class="editor-label">ルート音</span>
+      <select id="editorRootNote" class="editor-select" onchange="buildEditorBoard()">
+        <option value="">なし</option>
+        <option value="C">C</option><option value="C#">C#</option>
+        <option value="D">D</option><option value="D#">D#</option>
+        <option value="E">E</option><option value="F">F</option>
+        <option value="F#">F#</option><option value="G">G</option>
+        <option value="G#">G#</option><option value="A">A</option>
+        <option value="A#">A#</option><option value="B">B</option>
+      </select>
+      <span style="font-size:0.75rem;color:#aaa;">← 二重丸の基準</span>
     </div>
     <div class="editor-basefret-row">
       <span class="editor-label">開始フレット</span>
@@ -974,6 +1015,10 @@
     <span class="ctrl-label">コードタイプ</span>
     <div class="btn-group" id="typeBtns"></div>
     <button class="orient-toggle" id="orientToggle" onclick="toggleOrientation()">縦 / 横</button>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">ドット表示</span>
+    <div class="btn-group" id="dotDisplayBtns"></div>
   </div>
 </div>
 
@@ -1416,6 +1461,33 @@ const FLAT_NAMES = { "C#":"D♭", "D#":"E♭", "F#":"G♭", "G#":"A♭", "A#":"B
 let useFlat = false;
 let useHorizontal = true;
 
+// ドット表示モード
+let dotDisplay = 'finger'; // 'finger' | 'note' | 'degree' | 'doremi'
+const DOT_DISPLAY_OPTIONS = [
+  { key: 'finger', label: '指番号' },
+  { key: 'note',   label: '音名'   },
+  { key: 'degree', label: '度数'   },
+  { key: 'doremi', label: 'ドレミ' },
+];
+const NOTE_NAMES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const DOREMI_NAMES     = ['ド','ド#','レ','レ#','ミ','ファ','ファ#','ソ','ソ#','ラ','ラ#','シ'];
+const DEGREE_NAMES     = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
+
+function getDotLabel(stringIdx, fret, baseFret, finger, rootSemitone) {
+  if (dotDisplay === 'finger') return finger > 0 ? String(finger) : '';
+  const raw = fret === 0
+    ? OPEN_STRINGS[stringIdx]
+    : OPEN_STRINGS[stringIdx] + (baseFret - 1) + fret;
+  const pitch = ((raw % 12) + 12) % 12;
+  if (dotDisplay === 'note')   return NOTE_NAMES_SHARP[pitch];
+  if (dotDisplay === 'doremi') return DOREMI_NAMES[pitch];
+  if (dotDisplay === 'degree') {
+    if (rootSemitone == null) return NOTE_NAMES_SHARP[pitch];
+    return DEGREE_NAMES[((pitch - rootSemitone) % 12 + 12) % 12];
+  }
+  return '';
+}
+
 const FINGER_COLORS = ["", "#2176ae", "#c0392b", "#27ae60", "#e67e22"];
 
 // ルート音検出用
@@ -1534,7 +1606,7 @@ function renderLibrary() {
     nameEl.textContent = item.name || 'カスタム';
     card.appendChild(nameEl);
 
-    card.appendChild(drawDiagramH(item, null, true));
+    card.appendChild(drawDiagramH(item, item.rootNote || null, true));
 
     const actions = document.createElement('div');
     actions.className = 'library-card-actions';
@@ -1542,7 +1614,7 @@ function renderLibrary() {
     const addBtn = document.createElement('button');
     addBtn.className = 'library-card-btn add';
     addBtn.textContent = '+ 追加';
-    addBtn.onclick = () => addToSheet(null, null, item, item.name || 'カスタム');
+    addBtn.onclick = () => addToSheet(item.rootNote || null, null, item, item.name || 'カスタム');
     actions.appendChild(addBtn);
 
     const editBtn = document.createElement('button');
@@ -1598,7 +1670,7 @@ function importLibrary(event) {
 }
 
 // ===== エディター =====
-let edState = { frets: [-1,-1,-1,-1,-1,-1], fingers: [0,0,0,0,0,0], baseFret: 1, finger: 1, editIdx: null };
+let edState = { frets: [-1,-1,-1,-1,-1,-1], fingers: [0,0,0,0,0,0], baseFret: 1, finger: 1, editIdx: null, rootNote: '' };
 
 function openEditor(idx) {
   if (idx !== null && library[idx]) {
@@ -1608,17 +1680,21 @@ function openEditor(idx) {
       fingers: [...item.fingers],
       baseFret: item.baseFret || 1,
       finger: 1,
-      editIdx: idx
+      editIdx: idx,
+      rootNote: item.rootNote || ''
     };
     document.getElementById('editorName').value = item.name || '';
   } else {
-    edState = { frets: [-1,-1,-1,-1,-1,-1], fingers: [0,0,0,0,0,0], baseFret: 1, finger: 1, editIdx: null };
+    edState = { frets: [-1,-1,-1,-1,-1,-1], fingers: [0,0,0,0,0,0], baseFret: 1, finger: 1, editIdx: null, rootNote: '' };
     document.getElementById('editorName').value = '';
   }
   document.getElementById('editorBaseFret').value = edState.baseFret;
+  document.getElementById('editorRootNote').value = edState.rootNote;
   buildEditorFingers();
   buildEditorBoard();
-  document.getElementById('customModal').classList.add('open');
+  const modal = document.getElementById('customModal');
+  modal.classList.add('open');
+  setTimeout(() => modal.focus(), 50);
 }
 
 function closeEditor() {
@@ -1647,66 +1723,102 @@ function buildEditorFingers() {
 }
 
 function buildEditorBoard() {
-  // 弦ヘッダー（×/○）
+  const wrap  = document.querySelector('.editor-board-wrap');
   const heads = document.getElementById('editorHeads');
+  const board = document.getElementById('editorBoard');
   heads.innerHTML = '';
-  for (let s = 0; s < 6; s++) {
+  board.innerHTML = '';
+
+  // ルート音によるハイライト判定
+  const edRootVal = document.getElementById('editorRootNote')?.value || '';
+  const edRootSemitone = edRootVal ? ROOT_SEMITONES[edRootVal] : null;
+
+  function isRoot(s, fretNum) {
+    if (edRootSemitone == null || fretNum === -1) return false;
+    const raw = fretNum === 0
+      ? OPEN_STRINGS[s]
+      : OPEN_STRINGS[s] + (edState.baseFret - 1) + fretNum;
+    return ((raw % 12) + 12) % 12 === edRootSemitone;
+  }
+
+  function makeHeadBtn(s) {
     const btn = document.createElement('button');
     btn.className = 'editor-head-btn';
     const fret = edState.frets[s];
-    btn.textContent = fret === -1 ? '×' : fret === 0 ? '○' : '　';
+    const openIsRoot = fret === 0 && isRoot(s, 0);
+    btn.textContent = fret === -1 ? '×' : fret === 0 ? (openIsRoot ? '◎' : '○') : '　';
     btn.style.color = fret === -1 ? '#c0392b' : '#1a1a2e';
     btn.onclick = () => {
       if (edState.frets[s] === -1) edState.frets[s] = 0;
       else { edState.frets[s] = -1; edState.fingers[s] = 0; }
       buildEditorBoard();
     };
-    heads.appendChild(btn);
+    return btn;
   }
 
-  // フレットグリッド（6列×5行）
-  const board = document.getElementById('editorBoard');
-  board.innerHTML = '';
-  for (let row = 1; row <= 5; row++) {
-    for (let s = 0; s < 6; s++) {
-      const cell = document.createElement('div');
-      cell.className = 'editor-cell';
-      const hasDot = edState.frets[s] === row;
-      if (hasDot) {
-        cell.style.background = FINGER_COLORS_EDITOR[edState.fingers[s]] || '#888';
-        cell.style.borderRadius = '50%';
-        cell.style.width = '32px';
-        cell.style.height = '32px';
-        cell.style.margin = 'auto';
-        cell.style.border = 'none';
-        cell.textContent = edState.fingers[s] || '';
+  function makeDotCell(s, fretNum) {
+    const cell = document.createElement('div');
+    cell.className = 'editor-cell';
+    const hasDot = edState.frets[s] === fretNum;
+    if (hasDot) {
+      const color = FINGER_COLORS_EDITOR[edState.fingers[s]] || '#888';
+      cell.style.background = color;
+      cell.style.borderRadius = '50%';
+      cell.style.width = '32px';
+      cell.style.height = '32px';
+      cell.style.margin = 'auto';
+      cell.style.border = 'none';
+      cell.textContent = edState.fingers[s] || '';
+      // ルート音のドットは二重丸（白リング）
+      if (isRoot(s, fretNum)) {
+        cell.style.boxShadow = `0 0 0 2px #fff, 0 0 0 4px ${color}`;
       }
-      cell.onclick = () => {
-        if (edState.frets[s] === row) {
-          // 既存ドットを削除 → ミュートに
-          edState.frets[s] = -1;
-          edState.fingers[s] = 0;
-        } else {
-          edState.frets[s] = row;
-          edState.fingers[s] = edState.finger;
-        }
-        buildEditorBoard();
-        // ヘッダーも更新
-        buildEditorBoard();
-      };
-      board.appendChild(cell);
+    }
+    cell.onclick = () => {
+      if (edState.frets[s] === fretNum) {
+        edState.frets[s] = -1;
+        edState.fingers[s] = 0;
+      } else {
+        edState.frets[s] = fretNum;
+        edState.fingers[s] = edState.finger;
+      }
+      buildEditorBoard();
+    };
+    return cell;
+  }
+
+  if (useHorizontal) {
+    wrap.classList.add('horiz');
+    board.style.borderLeft = edState.baseFret === 1 ? '5px solid #1a1a2e' : '2px solid #1a1a2e';
+
+    for (let r = 0; r < 6; r++) heads.appendChild(makeHeadBtn(5 - r));
+
+    for (let r = 0; r < 6; r++) {
+      const s = 5 - r;
+      for (let col = 1; col <= 6; col++) board.appendChild(makeDotCell(s, col));
+    }
+  } else {
+    wrap.classList.remove('horiz');
+    board.style.borderLeft = '';
+
+    for (let s = 0; s < 6; s++) heads.appendChild(makeHeadBtn(s));
+
+    for (let row = 1; row <= 6; row++) {
+      for (let s = 0; s < 6; s++) board.appendChild(makeDotCell(s, row));
     }
   }
 }
 
 function saveToLibrary() {
   const name = document.getElementById('editorName').value.trim() || 'カスタム';
+  const rootNote = document.getElementById('editorRootNote').value;
   const item = {
     id: edState.editIdx !== null ? library[edState.editIdx].id : Date.now(),
     name,
     frets: [...edState.frets],
     fingers: [...edState.fingers],
     baseFret: edState.baseFret,
+    rootNote: rootNote || '',
     label: name
   };
   if (edState.editIdx !== null) {
@@ -1841,6 +1953,24 @@ function buildButtons() {
     btn.dataset.type = t.key;
     btn.onclick = () => { selectedType = t.key; updateActive("typeBtns", t.key, "type"); render(); };
     tb.appendChild(btn);
+  });
+
+  const db = document.getElementById("dotDisplayBtns");
+  DOT_DISPLAY_OPTIONS.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "tbtn" + (opt.key === dotDisplay ? " active" : "");
+    btn.textContent = opt.label;
+    btn.dataset.dot = opt.key;
+    btn.onclick = () => {
+      dotDisplay = opt.key;
+      document.querySelectorAll("#dotDisplayBtns button").forEach(b =>
+        b.classList.toggle("active", b.dataset.dot === opt.key)
+      );
+      render();
+      renderSheet();
+      renderLibrary();
+    };
+    db.appendChild(btn);
   });
 }
 
@@ -2050,7 +2180,7 @@ function renderSheet() {
 function drawDiagram(chord, rootNote, compact = false) {
   const rootSemitone = rootNote != null ? ROOT_SEMITONES[rootNote] : null;
   const NUM_STRINGS = 6;
-  const NUM_FRETS = 5;
+  const NUM_FRETS = Math.max(5, ...chord.frets.filter(f => f > 0));
   const STRING_SPACING = compact ? 24 : 32;
   const FRET_SPACING = compact ? 27 : 36;
   const MARGIN_LEFT = compact ? 27 : 36;
@@ -2127,9 +2257,10 @@ function drawDiagram(chord, rootNote, compact = false) {
       if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 4 : 6), color));
       if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 2 : 3), "#fff"));
       svg.appendChild(makeCircleFill(x, y, DOT_R, color));
-      if (finger > 0) {
-        const ft = makeText(String(finger), x, y + fingerYOffset, "#fff", fingerFontSize, true);
-        svg.appendChild(ft);
+      const label = getDotLabel(i, fret, baseFret, finger, rootSemitone);
+      if (label) {
+        const fs = dotDisplay === 'finger' ? fingerFontSize : (compact ? '0.5rem' : '0.62rem');
+        svg.appendChild(makeText(label, x, y + fingerYOffset, "#fff", fs, true));
       }
     }
   });
@@ -2140,7 +2271,7 @@ function drawDiagram(chord, rootNote, compact = false) {
 // ===== 横向きダイアグラム（Step2: グリッドのみ） =====
 function drawDiagramH(chord, rootNote, compact = false) {
   const NUM_STRINGS = 6;
-  const NUM_FRETS = 5;
+  const NUM_FRETS = Math.max(5, ...chord.frets.filter(f => f > 0));
   const STRING_SPACING = compact ? 24 : 32; // 弦と弦の間隔（縦方向）
   const FRET_SPACING   = compact ? 27 : 36; // フレットとフレットの間隔（横方向）
   const MARGIN_LEFT  = compact ? 30 : 40;  // 左マージン（×○記号用スペース）
@@ -2218,8 +2349,10 @@ function drawDiagramH(chord, rootNote, compact = false) {
       if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 4 : 6), color));
       if (isRoot) svg.appendChild(makeCircleFill(x, y, DOT_R + (compact ? 2 : 3), "#fff"));
       svg.appendChild(makeCircleFill(x, y, DOT_R, color));
-      if (finger > 0) {
-        svg.appendChild(makeText(String(finger), x, y + fingerYOffset, "#fff", fingerFontSize, true));
+      const label = getDotLabel(i, fret, baseFret, finger, rootSemitone);
+      if (label) {
+        const fs = dotDisplay === 'finger' ? fingerFontSize : (compact ? '0.5rem' : '0.62rem');
+        svg.appendChild(makeText(label, x, y + fingerYOffset, "#fff", fs, true));
       }
     }
   });
@@ -2312,13 +2445,26 @@ renderSheet();
 renderSlots();
 renderLibrary();
 
-// Enterキーでコード表に追加
+// キーボードショートカット
 document.addEventListener("keydown", (e) => {
+  const inField = ['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName);
+
+  // エディター開放中: 1〜4 で指番号切替
+  if (document.getElementById("customModal").classList.contains("open")) {
+    // コード名入力欄にフォーカスがある時だけスキップ、それ以外は常に有効
+    const isInNameInput = document.activeElement?.id === 'editorName';
+    if (!isInNameInput && ['1','2','3','4'].includes(e.key)) {
+      e.preventDefault();
+      edState.finger = parseInt(e.key);
+      buildEditorFingers();
+    }
+    return;
+  }
+
+  // Enterキーでコード表に追加
   if (e.key !== "Enter") return;
-  // モーダルが開いている場合はスキップ
   if (document.getElementById("helpModal").classList.contains("open")) return;
-  // 入力フィールドにフォーカスがある場合はスキップ
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if (inField) return;
   const btn = document.getElementById("addBtn");
   if (btn && !btn.disabled) btn.click();
 });
