@@ -1526,7 +1526,9 @@ const DOT_DISPLAY_OPTIONS = [
   { key: 'doremi', label: 'ドレミ' },
 ];
 const NOTE_NAMES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const DOREMI_NAMES     = ['ド','ド#','レ','レ#','ミ','ファ','ファ#','ソ','ソ#','ラ','ラ#','シ'];
+const NOTE_NAMES_FLAT  = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+const DOREMI_NAMES       = ['ド','ド#','レ','レ#','ミ','ファ','ファ#','ソ','ソ#','ラ','ラ#','シ'];
+const DOREMI_NAMES_FLAT  = ['ド','レ♭','レ','ミ♭','ミ','ファ','ソ♭','ソ','ラ♭','ラ','シ♭','シ'];
 const DEGREE_NAMES     = ['R','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
 
 function getDotLabel(stringIdx, fret, baseFret, finger, rootSemitone) {
@@ -1535,10 +1537,10 @@ function getDotLabel(stringIdx, fret, baseFret, finger, rootSemitone) {
     ? OPEN_STRINGS[stringIdx]
     : OPEN_STRINGS[stringIdx] + (baseFret - 1) + fret;
   const pitch = ((raw % 12) + 12) % 12;
-  if (dotDisplay === 'note')   return NOTE_NAMES_SHARP[pitch];
-  if (dotDisplay === 'doremi') return DOREMI_NAMES[pitch];
+  if (dotDisplay === 'note')   return (useFlat ? NOTE_NAMES_FLAT : NOTE_NAMES_SHARP)[pitch];
+  if (dotDisplay === 'doremi') return (useFlat ? DOREMI_NAMES_FLAT : DOREMI_NAMES)[pitch];
   if (dotDisplay === 'degree') {
-    if (rootSemitone == null) return NOTE_NAMES_SHARP[pitch];
+    if (rootSemitone == null) return (useFlat ? NOTE_NAMES_FLAT : NOTE_NAMES_SHARP)[pitch];
     return DEGREE_NAMES[((pitch - rootSemitone) % 12 + 12) % 12];
   }
   return '';
@@ -2038,6 +2040,8 @@ function toggleFlat() {
     btn.textContent = (useFlat && FLAT_NAMES[r]) ? FLAT_NAMES[r] : r;
   });
   render();
+  renderSheet();
+  renderLibrary();
 }
 
 function toggleOrientation() {
