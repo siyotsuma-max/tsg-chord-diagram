@@ -887,6 +887,16 @@
     height: auto;
     display: block;
   }
+  /* PC: 2列横並び */
+  @media (min-width: 640px) {
+    .tools-banners {
+      flex-direction: row;
+      justify-content: center;
+    }
+    .tools-banner-link {
+      width: 44%;
+    }
+  }
 
   /* ====== Print ====== */
   @media print {
