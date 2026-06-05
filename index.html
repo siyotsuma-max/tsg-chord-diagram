@@ -994,15 +994,25 @@
     body.print-sheet-only .sheet-print-title {
       display: block;
       font-family: 'Oswald', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 600;
+      font-size: 2.6rem;
+      font-weight: 700;
       color: #1a1a2e;
       text-align: center;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
-      margin-bottom: 4px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #1a1a2e;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 4px solid #c0392b;
+      line-height: 1;
+    }
+    body.print-sheet-only .sheet-print-title::before {
+      display: block;
+      content: "TSG GUITAR TOOLS";
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: #c0392b;
+      letter-spacing: 0.45em;
+      margin-bottom: 6px;
     }
     body.print-sheet-only .sheet-grid {
       display: grid;
