@@ -863,10 +863,12 @@
   .finger-legend-main { order: 2; }
   .controls           { order: 3; margin-top: 12px; }
 
-  /* ====== Mobile (〜639px): ボタンをやや小さく ====== */
+  /* ====== Mobile (〜639px) ====== */
   @media (max-width: 639px) {
     .rbtn { height: 36px; min-width: 36px; font-size: 0.8rem; padding: 0 7px; }
     .tbtn { height: 36px; padding: 5px 10px; font-size: 0.8rem; }
+    /* ダイアグラムを中央寄せ */
+    .diagrams-area { justify-content: center; }
   }
 
   /* ====== Tool Banners ====== */
@@ -1005,13 +1007,11 @@
     </div>
     <div class="brand-right">
       <div class="brand-sub1">Basic</div>
-      <div style="display:flex;align-items:baseline;gap:8px;">
-        <div class="brand-sub2">Chord Diagram</div>
-        <span style="font-size:0.86rem;color:#aaa;letter-spacing:0.08em;font-weight:500;white-space:nowrap;">【プロギタリスト監修】</span>
-      </div>
+      <div class="brand-sub2">Chord Diagram</div>
     </div>
   </div>
-  <div style="display:flex;gap:8px;align-items:center;">
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+    <span style="font-size:0.82rem;color:#aaa;letter-spacing:0.08em;font-weight:500;white-space:nowrap;">【プロギタリスト監修】</span>
     <button class="help-btn" onclick="document.getElementById('helpModal').classList.add('open')">使い方ガイド</button>
   </div>
 </header>
@@ -1147,8 +1147,8 @@
     </div>
     <span style="color:#ddd;margin:0 6px;font-size:1.1rem;line-height:1;align-self:center;">|</span>
     <div class="btn-group">
-      <button class="tbtn" id="vertBtn" onclick="setOrientation(false)">縦向き</button>
       <button class="tbtn active" id="horizBtn" onclick="setOrientation(true)">横向き</button>
+      <button class="tbtn" id="vertBtn" onclick="setOrientation(false)">縦向き</button>
     </div>
   </div>
   <div class="ctrl-row">
