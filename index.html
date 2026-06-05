@@ -2358,16 +2358,15 @@ function printSheet() {
   const html = `<!DOCTYPE html>
 <html lang="ja"><head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
 <title>TSG Basic Chord Diagram</title>
 <style>
 @page{margin:10mm;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:system-ui,sans-serif;background:#fff;}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;}
 .brand{text-align:center;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #c0392b;}
-.brand-sub{font-family:'Oswald',sans-serif;display:block;font-size:.6rem;color:#c0392b;letter-spacing:.5em;text-transform:uppercase;margin-bottom:4px;}
-.brand-main{font-family:'Oswald',sans-serif;display:block;font-size:1.8rem;font-weight:600;color:#1a1a2e;letter-spacing:.18em;text-transform:uppercase;}
-.user-title{font-family:'Oswald',sans-serif;font-size:1.2rem;color:#555;text-align:center;letter-spacing:.2em;margin-bottom:12px;}
+.brand-sub{font-family:'Helvetica Neue',Arial,sans-serif;display:block;font-size:.6rem;color:#c0392b;letter-spacing:.5em;text-transform:uppercase;margin-bottom:4px;}
+.brand-main{font-family:'Helvetica Neue',Arial,sans-serif;display:block;font-size:1.8rem;font-weight:700;color:#1a1a2e;letter-spacing:.18em;text-transform:uppercase;}
+.user-title{font-family:'Helvetica Neue',Arial,sans-serif;font-size:1.2rem;color:#555;text-align:center;letter-spacing:.2em;margin-bottom:12px;}
 #sheetGrid{display:grid;grid-template-columns:${cols};gap:8mm;justify-content:center;}
 ${manyCSS}
 .sheet-card,.sheet-card.compact{background:#fff;border-radius:8px;padding:5px 7px 7px;border:1px solid #ddd;display:flex;flex-direction:column;align-items:center;page-break-inside:avoid;break-inside:avoid;}
@@ -2383,7 +2382,7 @@ svg{display:block;}
 ${userTitle ? `<div class="user-title">${userTitle}</div>` : ''}
 ${grid.outerHTML}
 <script>
-window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});
+window.addEventListener('load',function(){setTimeout(function(){window.print();},800);});
 window.addEventListener('afterprint',function(){setTimeout(function(){window.close();},200);});
 <\/script>
 </body></html>`;
