@@ -389,17 +389,42 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  .sheet-title-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 12px;
+    border-left: 4px solid #c0392b;
+    line-height: 1;
+    gap: 3px;
+  }
+  .sheet-title-en {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #c0392b;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
   .sheet-title {
     font-family: 'Oswald', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.45rem;
+    font-weight: 600;
     color: #1a1a2e;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
+    line-height: 1;
   }
   .sheet-count {
-    font-size: 0.8rem;
-    color: #999;
-    margin-left: 8px;
-    font-weight: 600;
+    display: inline-block;
+    font-size: 0.72rem;
+    color: #fff;
+    background: #1a1a2e;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+    vertical-align: middle;
   }
   .sheet-actions { display: flex; gap: 8px; }
   .clear-btn {
@@ -1199,9 +1224,11 @@
 <!-- マイコード表 -->
 <div class="sheet-section" id="sheetSection">
   <div class="sheet-header">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span class="sheet-title">マイコード表</span>
-      <span class="sheet-count" id="sheetCount">0 / 8</span>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="sheet-title-block">
+        <span class="sheet-title-en">My Chord Chart</span>
+        <span class="sheet-title">マイコード表<span class="sheet-count" id="sheetCount">0 / 16</span></span>
+      </div>
       <input type="text" id="sheetTitleInput" class="sheet-title-input" placeholder="タイトルを入力（印刷に反映）" maxlength="40">
     </div>
     <div class="sheet-actions">
