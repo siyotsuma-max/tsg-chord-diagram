@@ -919,6 +919,9 @@
     .help-btn { padding: 0 9px; height: 30px; font-size: 0.75rem; }
   }
 
+  /* 印刷専用ブランドタイトル（通常画面では非表示） */
+  .sheet-brand-print { display: none; }
+
   /* ====== Tool Banners ====== */
   .tools-section {
     max-width: 900px;
@@ -995,7 +998,6 @@
     body.print-sheet-only .sheet-title-input { display: none; }
 
     /* 固定ブランドタイトル（印刷専用） */
-    .sheet-brand-print { display: none; }
     body.print-sheet-only .sheet-brand-print {
       display: block;
       text-align: center;
