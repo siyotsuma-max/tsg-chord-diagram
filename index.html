@@ -2340,15 +2340,28 @@ function clearSheet() {
 }
 
 function printSheet() {
+  // CSSクラス追加（デスクトップ用）
   document.body.classList.add("print-sheet-only");
   if (myChords.length > 12) document.body.classList.add("print-many");
-  window.onafterprint = () => {
+
+  // モバイル対応: 要素を直接非表示にして確実に隠す
+  const toHide = document.querySelectorAll(
+    'header, .controls, .diagrams-area, .finger-legend-main, .left-col, .slots-section, .library-section, .tools-section'
+  );
+  toHide.forEach(el => { el.dataset.printHidden = '1'; el.style.display = 'none'; });
+
+  function restoreAfterPrint() {
     document.body.classList.remove("print-sheet-only");
     document.body.classList.remove("print-many");
-    window.onafterprint = null;
-  };
-  // モバイルでクラス適用が描画に反映されるまで待ってから印刷
-  setTimeout(() => window.print(), 200);
+    toHide.forEach(el => { el.style.display = ''; delete el.dataset.printHidden; });
+  }
+
+  // afterprint イベント（対応ブラウザ）+ フォールバック
+  window.addEventListener('afterprint', restoreAfterPrint, { once: true });
+  setTimeout(restoreAfterPrint, 8000); // 8秒後に強制復元
+
+  // 2フレーム待って確実に描画反映後に印刷
+  requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
 }
 
 function renderSheet() {
