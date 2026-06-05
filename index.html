@@ -336,23 +336,30 @@
 
   /* ====== Play button ====== */
   .play-btn {
-    margin-top: 8px;
-    width: 38px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
     height: 38px;
-    border-radius: 50%;
+    border-radius: 8px;
     border: 2px solid #2176ae;
     background: #fff;
     color: #2176ae;
-    font-size: 1rem;
+    font-size: 0.92rem;
+    font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: 0.15s;
     -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .play-btn:hover { background: #2176ae; color: #fff; }
   .play-btn:active { transform: scale(0.93); }
+  .play-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.75;
+  }
 
   /* ====== Chord Sheet ====== */
   .sheet-section {
@@ -1132,12 +1139,21 @@
   <div class="ctrl-row">
     <span class="ctrl-label">ルート音</span>
     <div class="btn-group" id="rootBtns"></div>
-    <button class="acc-toggle" id="flatToggle" onclick="toggleFlat()">♭</button>
+  </div>
+  <div class="ctrl-row">
+    <div class="btn-group">
+      <button class="tbtn active" id="sharpBtn" onclick="setFlat(false)">♯</button>
+      <button class="tbtn" id="flatBtn" onclick="setFlat(true)">♭</button>
+    </div>
+    <span style="color:#ddd;margin:0 6px;font-size:1.1rem;line-height:1;align-self:center;">|</span>
+    <div class="btn-group">
+      <button class="tbtn" id="vertBtn" onclick="setOrientation(false)">縦向き</button>
+      <button class="tbtn active" id="horizBtn" onclick="setOrientation(true)">横向き</button>
+    </div>
   </div>
   <div class="ctrl-row">
     <span class="ctrl-label">コードタイプ</span>
     <div class="btn-group" id="typeBtns"></div>
-    <button class="orient-toggle" id="orientToggle" onclick="toggleOrientation()">縦 / 横</button>
   </div>
   <div class="ctrl-row">
     <span class="ctrl-label">ドット表示</span>
@@ -1704,18 +1720,18 @@ function playChord(chord) {
   const totalMs = (idx * interval + 5.0) * 1000;
   chordPlayTimeout = setTimeout(() => {
     const btn = document.getElementById('chordPlayBtn');
-    if (btn) { btn.textContent = '▶'; btn.dataset.playing = ''; }
+    if (btn) { btn.innerHTML = '▶<span class="play-label">再生</span>'; btn.dataset.playing = ''; }
   }, totalMs);
 
   const btn = document.getElementById('chordPlayBtn');
-  if (btn) { btn.textContent = '■'; btn.dataset.playing = '1'; }
+  if (btn) { btn.innerHTML = '■<span class="play-label">停止</span>'; btn.dataset.playing = '1'; }
 }
 
 function stopChord() {
   if (chordPlayTimeout) { clearTimeout(chordPlayTimeout); chordPlayTimeout = null; }
   if (audioCtx) { audioCtx.close(); audioCtx = null; }
   const btn = document.getElementById('chordPlayBtn');
-  if (btn) { btn.textContent = '▶'; btn.dataset.playing = ''; }
+  if (btn) { btn.innerHTML = '▶<span class="play-label">再生</span>'; btn.dataset.playing = ''; }
 }
 
 // ===== マイライブラリ =====
@@ -2112,9 +2128,10 @@ function buildButtons() {
   });
 }
 
-function toggleFlat() {
-  useFlat = !useFlat;
-  document.getElementById("flatToggle").classList.toggle("flat-mode", useFlat);
+function setFlat(val) {
+  useFlat = val;
+  document.getElementById("sharpBtn").classList.toggle("active", !useFlat);
+  document.getElementById("flatBtn").classList.toggle("active", useFlat);
   document.querySelectorAll("#rootBtns button").forEach(btn => {
     const r = btn.dataset.root;
     btn.textContent = (useFlat && FLAT_NAMES[r]) ? FLAT_NAMES[r] : r;
@@ -2124,10 +2141,10 @@ function toggleFlat() {
   renderLibrary();
 }
 
-function toggleOrientation() {
-  useHorizontal = !useHorizontal;
-  document.getElementById("orientToggle").classList.toggle("horiz-mode", useHorizontal);
-  document.getElementById("orientToggle").textContent = useHorizontal ? "縦向きに切替" : "横向きに切替";
+function setOrientation(horiz) {
+  useHorizontal = horiz;
+  document.getElementById("vertBtn").classList.toggle("active", !useHorizontal);
+  document.getElementById("horizBtn").classList.toggle("active", useHorizontal);
   document.body.classList.toggle("horiz-mode", useHorizontal);
   render();
   renderSheet();
@@ -2186,14 +2203,12 @@ function render() {
     hint.innerHTML = '<kbd>↵ Enter</kbd>';
     addRow.appendChild(hint);
 
-    card.appendChild(addRow);
-
-    // 再生ボタン
+    // 再生ボタン（addRowに追加）
     const playBtn = document.createElement("button");
     playBtn.className = "play-btn";
     playBtn.id = "chordPlayBtn";
     playBtn.title = "コードを試聴";
-    playBtn.textContent = "▶";
+    playBtn.innerHTML = '▶<span class="play-label">再生</span>';
     playBtn.onclick = () => {
       if (playBtn.dataset.playing) {
         stopChord();
@@ -2201,7 +2216,8 @@ function render() {
         playChord(chord);
       }
     };
-    card.appendChild(playBtn);
+    addRow.appendChild(playBtn);
+    card.appendChild(addRow);
 
     area.appendChild(card);
   });
@@ -2547,9 +2563,7 @@ function makeText(str, x, y, fill, fontSize, bold = false) {
 
 buildButtons();
 
-// 初期状態：横向きをデフォルトに
-document.getElementById("orientToggle").classList.add("horiz-mode");
-document.getElementById("orientToggle").textContent = "縦向きに切替";
+// 初期状態：横向き・シャープモード
 document.body.classList.add("horiz-mode");
 
 // 初期表示：Cメジャー
