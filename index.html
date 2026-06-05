@@ -127,23 +127,30 @@
 
   .ctrl-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .ctrl-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #888;
-    width: 76px;
+    width: 58px;
     flex-shrink: 0;
     font-weight: 600;
+    padding-top: 8px;
+    line-height: 1.3;
   }
 
   .btn-group {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
+  }
+
+  /* ラベルの直後のbtn-groupは残り幅を使う */
+  .ctrl-label + .btn-group {
+    flex: 1;
   }
 
   .rbtn {
