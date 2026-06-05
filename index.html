@@ -974,6 +974,7 @@
   @media print {
     @page { margin: 10mm; }
     body { background: #fff; padding: 0; }
+    header { margin: 0 !important; padding: 0 !important; background: none !important; }
     body.print-sheet-only .tools-section,
     body.print-sheet-only header,
     body.print-sheet-only .controls,
@@ -2310,7 +2311,8 @@ function printSheet() {
     document.body.classList.remove("print-many");
     window.onafterprint = null;
   };
-  window.print();
+  // モバイルでクラス適用が描画に反映されるまで待ってから印刷
+  setTimeout(() => window.print(), 200);
 }
 
 function renderSheet() {
