@@ -153,6 +153,13 @@
     flex: 1;
   }
 
+  /* グループ区切り */
+  .ctrl-row.group-sep {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+  }
+
   .rbtn {
     min-width: 44px;
     height: 40px;
@@ -1152,7 +1159,7 @@
     <span class="ctrl-label">ルート音</span>
     <div class="btn-group" id="rootBtns"></div>
   </div>
-  <div class="ctrl-row">
+  <div class="ctrl-row group-sep">
     <div class="btn-group">
       <button class="tbtn active" id="sharpBtn" onclick="setFlat(false)">♯</button>
       <button class="tbtn" id="flatBtn" onclick="setFlat(true)">♭</button>
@@ -1163,11 +1170,11 @@
       <button class="tbtn" id="vertBtn" onclick="setOrientation(false)">縦向き</button>
     </div>
   </div>
-  <div class="ctrl-row">
+  <div class="ctrl-row group-sep">
     <span class="ctrl-label">コードタイプ</span>
     <div class="btn-group" id="typeBtns"></div>
   </div>
-  <div class="ctrl-row">
+  <div class="ctrl-row group-sep">
     <span class="ctrl-label">ドット表示</span>
     <div class="btn-group" id="dotDisplayBtns"></div>
   </div>
