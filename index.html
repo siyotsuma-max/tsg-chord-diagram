@@ -2359,7 +2359,7 @@ function printSheet() {
   };
   window.addEventListener('afterprint', cleanup);
 
-  window.print();
+  setTimeout(() => window.print(), 80);
 }
 
 function renderSheet() {
