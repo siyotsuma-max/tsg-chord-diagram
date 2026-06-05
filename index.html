@@ -2342,28 +2342,57 @@ function clearSheet() {
 }
 
 function printSheet() {
-  // CSSクラス追加（デスクトップ用）
-  document.body.classList.add("print-sheet-only");
-  if (myChords.length > 12) document.body.classList.add("print-many");
+  if (myChords.length === 0) { alert('コード表が空です。'); return; }
 
-  // モバイル対応: 要素を直接非表示にして確実に隠す
-  const toHide = document.querySelectorAll(
-    'header, .controls, .diagrams-area, .finger-legend-main, .left-col, .slots-section, .library-section, .tools-section'
-  );
-  toHide.forEach(el => { el.dataset.printHidden = '1'; el.style.display = 'none'; });
+  // コード表グリッドをコピーしてUIボタンを除去
+  const grid = document.getElementById('sheetGrid').cloneNode(true);
+  grid.querySelectorAll('.sheet-card-remove').forEach(b => b.remove());
+  grid.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
 
-  function restoreAfterPrint() {
-    document.body.classList.remove("print-sheet-only");
-    document.body.classList.remove("print-many");
-    toHide.forEach(el => { el.style.display = ''; delete el.dataset.printHidden; });
-  }
+  const userTitle = document.getElementById('sheetTitleInput').value.trim();
+  const isHoriz = document.body.classList.contains('horiz-mode');
+  const isMany  = myChords.length > 12;
+  const cols    = isHoriz ? 'repeat(3, auto)' : 'repeat(4, auto)';
+  const manyCSS = isMany  ? `#sheetGrid{zoom:.85;grid-template-columns:repeat(4,auto)!important;gap:5mm;}` : '';
 
-  // afterprint イベント（対応ブラウザ）+ フォールバック
-  window.addEventListener('afterprint', restoreAfterPrint, { once: true });
-  setTimeout(restoreAfterPrint, 8000); // 8秒後に強制復元
+  const html = `<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<title>TSG Basic Chord Diagram</title>
+<style>
+@page{margin:10mm;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;background:#fff;}
+.brand{text-align:center;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #c0392b;}
+.brand-sub{font-family:'Oswald',sans-serif;display:block;font-size:.6rem;color:#c0392b;letter-spacing:.5em;text-transform:uppercase;margin-bottom:4px;}
+.brand-main{font-family:'Oswald',sans-serif;display:block;font-size:1.8rem;font-weight:600;color:#1a1a2e;letter-spacing:.18em;text-transform:uppercase;}
+.user-title{font-family:'Oswald',sans-serif;font-size:1.2rem;color:#555;text-align:center;letter-spacing:.2em;margin-bottom:12px;}
+#sheetGrid{display:grid;grid-template-columns:${cols};gap:8mm;justify-content:center;}
+${manyCSS}
+.sheet-card,.sheet-card.compact{background:#fff;border-radius:8px;padding:5px 7px 7px;border:1px solid #ddd;display:flex;flex-direction:column;align-items:center;page-break-inside:avoid;break-inside:avoid;}
+.chord-name{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600;color:#1a1a2e;letter-spacing:.06em;margin-bottom:1px;}
+.chord-position{font-size:.62rem;color:#999;font-weight:600;margin-bottom:6px;}
+svg{display:block;}
+</style></head>
+<body>
+<div class="brand">
+  <span class="brand-sub">TSG Guitar Tools</span>
+  <span class="brand-main">TSG Basic Chord Diagram</span>
+</div>
+${userTitle ? `<div class="user-title">${userTitle}</div>` : ''}
+${grid.outerHTML}
+<script>
+window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});
+window.addEventListener('afterprint',function(){setTimeout(function(){window.close();},200);});
+</script>
+</body></html>`;
 
-  // 2フレーム待って確実に描画反映後に印刷
-  requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const w    = window.open(url, '_blank');
+  if (!w) alert('ポップアップがブロックされています。ブラウザの設定で許可してください。');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function renderSheet() {
