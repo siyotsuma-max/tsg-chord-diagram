@@ -2344,60 +2344,57 @@ function clearSheet() {
 function printSheet() {
   if (myChords.length === 0) { alert('コード表が空です。'); return; }
 
-  const grid = document.getElementById('sheetGrid').cloneNode(true);
-  grid.querySelectorAll('.sheet-card-remove').forEach(b => b.remove());
-  grid.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
-
+  // 印刷用タイトルをセット
   const userTitle = document.getElementById('sheetTitleInput').value.trim();
-  const isHoriz = document.body.classList.contains('horiz-mode');
-  const isMany  = myChords.length > 12;
-  const cols    = isHoriz ? 'repeat(3, auto)' : 'repeat(4, auto)';
-  const manyCSS = isMany  ? `#sheetGrid{zoom:.85;grid-template-columns:repeat(4,auto)!important;gap:5mm;}` : '';
+  document.getElementById('sheetPrintTitle').textContent = userTitle;
 
-  const html = `<!DOCTYPE html>
-<html lang="ja"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TSG Basic Chord Diagram</title>
-<style>
-@page{margin:10mm;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Helvetica Neue',Arial,sans-serif;background:#fff;padding:16px;}
-.print-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:10px 14px;background:#1a1a2e;border-radius:10px;}
-.print-bar-title{color:#fff;font-size:0.9rem;font-weight:700;letter-spacing:0.05em;}
-.print-btn{padding:10px 22px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;}
-.brand{text-align:center;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #c0392b;}
-.brand-sub{display:block;font-size:.6rem;color:#c0392b;letter-spacing:.5em;text-transform:uppercase;margin-bottom:4px;}
-.brand-main{display:block;font-size:1.8rem;font-weight:700;color:#1a1a2e;letter-spacing:.18em;text-transform:uppercase;}
-.user-title{font-size:1.2rem;color:#555;text-align:center;letter-spacing:.2em;margin-bottom:12px;}
-#sheetGrid{display:grid;grid-template-columns:${cols};gap:8mm;justify-content:center;}
-${manyCSS}
-.sheet-card,.sheet-card.compact{background:#fff;border-radius:8px;padding:5px 7px 7px;border:1px solid #ddd;display:flex;flex-direction:column;align-items:center;page-break-inside:avoid;break-inside:avoid;}
-.chord-name{font-size:1.1rem;font-weight:700;color:#1a1a2e;letter-spacing:.06em;margin-bottom:1px;}
-.chord-position{font-size:.62rem;color:#999;font-weight:600;margin-bottom:6px;}
-svg{display:block;}
-@media print{.print-bar{display:none;}}
-</style></head>
-<body>
-<div class="print-bar">
-  <span class="print-bar-title">TSG Basic Chord Diagram</span>
-  <button class="print-btn" onclick="window.print()">🖨 印刷する</button>
-</div>
-<div class="brand">
-  <span class="brand-sub">TSG Guitar Tools</span>
-  <span class="brand-main">TSG Basic Chord Diagram</span>
-</div>
-${userTitle ? `<div class="user-title">${userTitle}</div>` : ''}
-${grid.outerHTML}
-<script>
-window.addEventListener('afterprint', function(){ window.close(); });
-<\/script>
-</body></html>`;
+  // 印刷CSS を強制適用するスタイルを注入
+  const printStyle = document.createElement('style');
+  printStyle.id = 'js-print-style';
+  printStyle.textContent = `
+    @media print {
+      header, .left-col, .tools-section,
+      #slotsSection, #librarySection { display: none !important; }
+      .main-layout { display: block !important; }
+      #sheetSection { margin-top: 0 !important; }
+      .sheet-header, .sheet-actions, #printOverlay { display: none !important; }
+      .sheet-brand-print { display: block !important; }
+      #sheetPrintTitle { display: block !important; }
+      body { padding: 0 !important; background: #fff !important; }
+    }
+  `;
+  document.head.appendChild(printStyle);
 
-  const w = window.open('', '_blank');
-  if (!w) { alert('ポップアップがブロックされています。ブラウザの設定で許可してください。'); return; }
-  w.document.write(html);
-  w.document.close();
+  // オーバーレイを表示（ユーザーが自分でタップ → Android でも動作する）
+  const overlay = document.createElement('div');
+  overlay.id = 'printOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+  overlay.innerHTML = `
+    <div style="color:#fff;font-size:1rem;font-weight:600;text-align:center;line-height:1.8;">
+      コード表の印刷準備ができました<br>
+      <span style="font-size:0.82rem;opacity:0.6;">下のボタンをタップしてください</span>
+    </div>
+    <button id="printExecBtn" style="padding:16px 48px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      🖨 印刷する
+    </button>
+    <button id="printCancelBtn" style="padding:10px 28px;background:transparent;color:#aaa;border:1px solid #555;border-radius:8px;font-size:0.9rem;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      キャンセル
+    </button>
+  `;
+  document.body.appendChild(overlay);
+
+  const cleanup = () => {
+    overlay.remove();
+    printStyle.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  document.getElementById('printExecBtn').addEventListener('click', () => {
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+  });
+
+  document.getElementById('printCancelBtn').addEventListener('click', cleanup);
 }
 
 function renderSheet() {
