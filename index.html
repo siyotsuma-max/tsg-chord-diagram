@@ -944,6 +944,10 @@
     .sheet-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
     /* シートカード内のSVGをモバイル幅に合わせて縮小 */
     .sheet-grid .sheet-card svg { width: 145px; height: auto; }
+    /* ライブラリ：スマホは2列グリッドで中央揃え */
+    .library-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .library-card { align-items: center; }
+    .library-grid .library-card svg { width: 145px; height: auto; }
     .help-btn { padding: 0 9px; height: 30px; font-size: 0.75rem; }
   }
 
