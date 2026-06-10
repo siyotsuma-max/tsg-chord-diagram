@@ -679,6 +679,8 @@
   .library-card-btn.add:hover { background: #219a52; }
   .library-card-btn.edit { background: #e9ecef; color: #333; }
   .library-card-btn.edit:hover { background: #dee2e6; }
+  .library-card-btn.dupe { background: #eef4fb; color: #2176ae; }
+  .library-card-btn.dupe:hover { background: #d6e8f7; }
   .library-card-btn.del  { background: #fff0f0; color: #c0392b; }
   .library-card-btn.del:hover  { background: #fdd; }
 
@@ -1887,6 +1889,20 @@ function renderLibrary() {
     editBtn.textContent = '編集';
     editBtn.onclick = () => openEditor(idx);
     actions.appendChild(editBtn);
+
+    const dupeBtn = document.createElement('button');
+    dupeBtn.className = 'library-card-btn dupe';
+    dupeBtn.textContent = '複製';
+    dupeBtn.onclick = () => {
+      const copy = JSON.parse(JSON.stringify(item));
+      copy.name = (copy.name || 'カスタム') + ' のコピー';
+      library.push(copy);
+      saveLibrary();
+      renderLibrary();
+      // 複製したものをそのままエディターで開く
+      openEditor(library.length - 1);
+    };
+    actions.appendChild(dupeBtn);
 
     const delBtn = document.createElement('button');
     delBtn.className = 'library-card-btn del';
