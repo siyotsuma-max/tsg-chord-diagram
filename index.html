@@ -942,6 +942,8 @@
     .brand-right { border-bottom-width: 2px; }
     /* マイコード表：スマホは2列で縦に積む */
     .sheet-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+    /* シートカード内のSVGをモバイル幅に合わせて縮小 */
+    .sheet-grid .sheet-card svg { width: 145px; height: auto; }
     .help-btn { padding: 0 9px; height: 30px; font-size: 0.75rem; }
   }
 
@@ -2529,6 +2531,7 @@ function drawDiagram(chord, rootNote, compact = false) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", svgW);
   svg.setAttribute("height", svgH);
+  svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
   svg.style.display = "block";
 
   const frets = chord.frets;      // [6弦〜1弦]
@@ -2622,6 +2625,7 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("width", svgW);
   svg.setAttribute("height", svgH);
+  svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
   svg.style.display = "block";
 
   const baseFret = chord.baseFret;
