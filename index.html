@@ -1734,11 +1734,19 @@ const TYPES = [
 ];
 
 const FLAT_NAMES = { "C#":"D♭", "D#":"E♭", "F#":"G♭", "G#":"A♭", "A#":"B♭" };
-let useFlat = false;
-let useHorizontal = true;
+const PREF_KEY = 'tsg-chord-prefs';
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { return {}; }
+}
+function savePrefs() {
+  localStorage.setItem(PREF_KEY, JSON.stringify({ useFlat, useHorizontal, dotDisplay }));
+}
+const _prefs = loadPrefs();
+let useFlat       = _prefs.useFlat       ?? false;
+let useHorizontal = _prefs.useHorizontal ?? true;
 
 // ドット表示モード
-let dotDisplay = 'finger'; // 'finger' | 'note' | 'degree' | 'doremi'
+let dotDisplay = _prefs.dotDisplay ?? 'finger'; // 'finger' | 'note' | 'degree' | 'doremi'
 const DOT_DISPLAY_OPTIONS = [
   { key: 'finger', label: '指番号' },
   { key: 'note',   label: '音名'   },
@@ -2261,6 +2269,7 @@ function buildButtons() {
     btn.dataset.dot = opt.key;
     btn.onclick = () => {
       dotDisplay = opt.key;
+      savePrefs();
       document.querySelectorAll("#dotDisplayBtns button").forEach(b =>
         b.classList.toggle("active", b.dataset.dot === opt.key)
       );
@@ -2274,6 +2283,7 @@ function buildButtons() {
 
 function setFlat(val) {
   useFlat = val;
+  savePrefs();
   document.getElementById("sharpBtn").classList.toggle("active", !useFlat);
   document.getElementById("flatBtn").classList.toggle("active", useFlat);
   document.querySelectorAll("#rootBtns button").forEach(btn => {
@@ -2287,6 +2297,7 @@ function setFlat(val) {
 
 function setOrientation(horiz) {
   useHorizontal = horiz;
+  savePrefs();
   document.getElementById("vertBtn").classList.toggle("active", !useHorizontal);
   document.getElementById("horizBtn").classList.toggle("active", useHorizontal);
   document.body.classList.toggle("horiz-mode", useHorizontal);
@@ -2783,8 +2794,24 @@ sheetTitleInput.addEventListener('input', () => {
   localStorage.setItem(TITLE_KEY, t);
 });
 
+// 保存済み設定をUIに反映（ボタン状態・bodyクラス）
+document.getElementById("sharpBtn").classList.toggle("active", !useFlat);
+document.getElementById("flatBtn").classList.toggle("active", useFlat);
+document.getElementById("horizBtn").classList.toggle("active", useHorizontal);
+document.getElementById("vertBtn").classList.toggle("active", !useHorizontal);
+document.body.classList.toggle("horiz-mode", useHorizontal);
+
 updateActive("rootBtns", "C", "root");
 updateActive("typeBtns", "major", "type");
+
+// ♭モード復元時はルート音ボタンのラベルを更新
+if (useFlat) {
+  document.querySelectorAll("#rootBtns button").forEach(btn => {
+    const r = btn.dataset.root;
+    if (r && FLAT_NAMES[r]) btn.textContent = FLAT_NAMES[r];
+  });
+}
+
 render();
 renderSheet();
 renderSlots();
