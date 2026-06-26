@@ -969,8 +969,11 @@
     .sheet-grid .sheet-card svg { width: 145px; height: auto; }
     /* ライブラリ：スマホは2列グリッドで中央揃え */
     .library-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .library-card { align-items: center; }
+    .library-card { align-items: center; width: 100%; box-sizing: border-box; }
     .library-grid .library-card svg { width: 145px; height: auto; }
+    /* ボタン4個が1行に収まらず横はみ出しするため2列に折り返す */
+    .library-card-actions { flex-wrap: wrap; justify-content: center; }
+    .library-card-btn { padding: 5px 9px; font-size: 0.74rem; }
     .help-btn { padding: 0 9px; height: 30px; font-size: 0.75rem; }
   }
 
