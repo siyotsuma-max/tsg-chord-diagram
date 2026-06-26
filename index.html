@@ -2492,8 +2492,11 @@ function printLibrary() {
   printStyle.textContent = `
     @media print {
       header, .left-col, .tools-section,
-      #slotsSection, #sheetSection { display: none !important; }
+      #slotsSection { display: none !important; }
       .main-layout { display: block !important; }
+      #sheetSection { margin-top: 0 !important; }
+      .sheet-header, .sheet-brand-print, .sheet-print-title,
+      #sheetGrid { display: none !important; }
       #librarySection { margin-top: 0 !important; }
       .library-header, .library-card-actions,
       .library-section .slots-io, .library-section .slots-io-hint,
