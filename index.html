@@ -686,6 +686,18 @@
   .library-card-btn.dupe:hover { background: #d6e8f7; }
   .library-card-btn.del  { background: #fff0f0; color: #c0392b; }
   .library-card-btn.del:hover  { background: #fdd; }
+  .library-print-btn {
+    padding: 5px 12px;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .library-print-btn:hover { background: #2e2e50; }
+  .library-brand-print, .library-print-title { display: none; }
 
   /* ====== Custom Editor Modal ====== */
   .custom-modal {
@@ -1333,8 +1345,17 @@
   <div class="library-section" id="librarySection">
     <div class="library-header">
       <span class="slots-title" style="margin:0;">🎸 カスタムコード作成ライブラリ</span>
-      <button class="library-new-btn" onclick="openEditor(null)">＋ 新規作成</button>
+      <div style="display:flex;gap:8px;">
+        <button class="library-print-btn" onclick="printLibrary()">🖨 ライブラリを印刷</button>
+        <button class="library-new-btn" onclick="openEditor(null)">＋ 新規作成</button>
+      </div>
     </div>
+    <!-- 印刷専用: 固定ブランドタイトル -->
+    <div class="library-brand-print">
+      <span class="sheet-brand-print-sub">TSG Guitar Tools</span>
+      <span class="sheet-brand-print-main">TSG Basic Chord Diagram</span>
+    </div>
+    <div class="library-print-title">カスタムコード作成ライブラリ</div>
     <div class="library-empty" id="libraryEmpty">作成したカスタムコードがここに表示されます</div>
     <div class="library-grid" id="libraryGrid"></div>
     <div class="slots-io">
@@ -2438,6 +2459,108 @@ function printSheet() {
   overlay.innerHTML = `
     <div style="color:#fff;font-size:1rem;font-weight:600;text-align:center;line-height:1.8;">
       コード表の印刷準備ができました<br>
+      <span style="font-size:0.82rem;opacity:0.6;">下のボタンをタップしてください</span>
+    </div>
+    <button id="printExecBtn" style="padding:16px 48px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      🖨 印刷する
+    </button>
+    <button id="printCancelBtn" style="padding:10px 28px;background:transparent;color:#aaa;border:1px solid #555;border-radius:8px;font-size:0.9rem;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      キャンセル
+    </button>
+  `;
+  document.body.appendChild(overlay);
+
+  const cleanup = () => {
+    overlay.remove();
+    printStyle.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  document.getElementById('printExecBtn').addEventListener('click', () => {
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+  });
+
+  document.getElementById('printCancelBtn').addEventListener('click', cleanup);
+}
+
+function printLibrary() {
+  if (library.length === 0) { alert('ライブラリが空です。'); return; }
+
+  const printStyle = document.createElement('style');
+  printStyle.id = 'js-print-style';
+  printStyle.textContent = `
+    @media print {
+      header, .left-col, .tools-section,
+      #slotsSection, #sheetSection { display: none !important; }
+      .main-layout { display: block !important; }
+      #librarySection { margin-top: 0 !important; }
+      .library-header, .library-card-actions,
+      .library-section .slots-io, .library-section .slots-io-hint,
+      #printOverlay { display: none !important; }
+      .library-brand-print {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 4px solid #c0392b;
+        line-height: 1;
+      }
+      .library-brand-print .sheet-brand-print-sub {
+        display: block;
+        font-family: 'Oswald', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: #c0392b;
+        letter-spacing: 0.5em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+      .library-brand-print .sheet-brand-print-main {
+        display: block;
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .library-print-title {
+        display: block !important;
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #555;
+        text-align: center;
+        letter-spacing: 0.2em;
+        margin-bottom: 10px;
+      }
+      .library-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, auto) !important;
+        gap: 8mm !important;
+        justify-content: center !important;
+      }
+      .library-card {
+        background: #fff !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        padding: 5px 7px 7px !important;
+      }
+      .library-card-name { font-size: 1rem; margin-bottom: 1px; }
+      body { padding: 0 !important; background: #fff !important; }
+    }
+  `;
+  document.head.appendChild(printStyle);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'printOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+  overlay.innerHTML = `
+    <div style="color:#fff;font-size:1rem;font-weight:600;text-align:center;line-height:1.8;">
+      ライブラリの印刷準備ができました<br>
       <span style="font-size:0.82rem;opacity:0.6;">下のボタンをタップしてください</span>
     </div>
     <button id="printExecBtn" style="padding:16px 48px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">
