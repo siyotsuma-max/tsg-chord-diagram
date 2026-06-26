@@ -92,6 +92,23 @@
   }
   .print-btn:hover { background: #2e2e50; }
   .print-btn:active { transform: scale(0.97); }
+  .share-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #2176ae;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .share-btn:hover { background: #1a5d8a; }
+  .share-btn:active { transform: scale(0.97); }
 
   /* ====== 2列レイアウト（広い画面用） ====== */
   .main-layout {
@@ -1133,6 +1150,17 @@
   </div>
 </header>
 
+<!-- 共有URLモーダル -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('open')">✕</button>
+    <div class="modal-title">🔗 マイコード表をURLで共有</div>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:14px;line-height:1.6;">このURLを開くと、今のマイコード表がそのまま表示されます。生徒さんに送ってチェックに使ってください。</p>
+    <input type="text" id="shareUrlInput" readonly style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;margin-bottom:12px;box-sizing:border-box;" onclick="this.select()">
+    <button class="share-btn" id="shareCopyBtn" style="width:100%;justify-content:center;" onclick="copyShareUrl()">📋 URLをコピー</button>
+  </div>
+</div>
+
 <!-- ヘルプモーダル -->
 <div class="modal-overlay" id="helpModal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal">
@@ -1302,6 +1330,7 @@
     </div>
     <div class="sheet-actions">
       <button class="clear-btn" onclick="clearSheet()">🗑 コード全消去</button>
+      <button class="share-btn" onclick="shareSheetURL()">🔗 URLで共有</button>
       <button class="print-btn" onclick="printSheet()">🖨 コード表を印刷</button>
     </div>
   </div>
@@ -1315,6 +1344,14 @@
   <div class="sheet-grid" id="sheetGrid">
     <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
+  <div class="slots-io">
+    <button class="slot-io-btn" onclick="exportSheetJSON()">📤 コード表をJSONで保存</button>
+    <label class="slot-io-btn" style="cursor:pointer;">
+      📥 JSONを読み込み
+      <input type="file" accept=".json" style="display:none" onchange="importSheetJSON(event)">
+    </label>
+  </div>
+  <div class="slots-io-hint">URL共有はその場で開いて確認、JSONはファイルでの受け渡し用です</div>
   <!-- 保存スロット -->
   <div class="slots-section" id="slotsSection">
     <div class="slots-title">💾 マイコード表　保存スロット</div>
@@ -2407,6 +2444,95 @@ function clearSheet() {
   render();
 }
 
+// ===== マイコード表の共有（URL / JSON） =====
+
+// UTF-8文字列をBase64url化（iOSでのスタックオーバーフロー回避のためspreadは使わない）
+function b64urlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64urlDecode(b64url) {
+  let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+function buildSheetPayload() {
+  return { t: sheetTitleInput.value, c: myChords };
+}
+
+// 現在のコード表に payload を反映する（既存データがあれば上書き確認）
+function applySheetPayload(payload) {
+  if (!payload || !Array.isArray(payload.c)) return false;
+  if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return false;
+  myChords = payload.c;
+  saveCurrentSheet();
+  sheetTitleInput.value = payload.t || '';
+  sheetPrintTitle.textContent = sheetTitleInput.value;
+  localStorage.setItem(TITLE_KEY, sheetTitleInput.value);
+  renderSheet();
+  render();
+  return true;
+}
+
+function shareSheetURL() {
+  if (myChords.length === 0) { alert('コード表が空です。先にコードを追加してください。'); return; }
+  const encoded = b64urlEncode(JSON.stringify(buildSheetPayload()));
+  const url = `${location.origin}${location.pathname}#sheet=${encoded}`;
+  document.getElementById('shareUrlInput').value = url;
+  document.getElementById('shareModal').classList.add('open');
+}
+
+function copyShareUrl() {
+  const input = document.getElementById('shareUrlInput');
+  input.select();
+  const btn = document.getElementById('shareCopyBtn');
+  const finish = () => {
+    const orig = '📋 URLをコピー';
+    btn.textContent = '✅ コピーしました';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(input.value).then(finish).catch(() => document.execCommand('copy') && finish());
+  } else {
+    document.execCommand('copy');
+    finish();
+  }
+}
+
+function exportSheetJSON() {
+  if (myChords.length === 0) { alert('コード表が空です。'); return; }
+  const json = JSON.stringify(buildSheetPayload(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tsg-chord-sheet-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+}
+
+function importSheetJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (!applySheetPayload(payload)) return;
+      alert('コード表を読み込みました！');
+    } catch {
+      alert('ファイルの形式が正しくありません。');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 function printSheet() {
   if (myChords.length === 0) { alert('コード表が空です。'); return; }
 
@@ -2793,6 +2919,19 @@ sheetTitleInput.addEventListener('input', () => {
   sheetPrintTitle.textContent = t;
   localStorage.setItem(TITLE_KEY, t);
 });
+
+// URL共有（#sheet=...）から開かれた場合は読み込んで反映
+(function loadSheetFromHash() {
+  const m = location.hash.match(/^#sheet=(.+)$/);
+  if (!m) return;
+  try {
+    const payload = JSON.parse(b64urlDecode(m[1]));
+    applySheetPayload(payload);
+  } catch {
+    alert('共有URLの読み込みに失敗しました。');
+  }
+  history.replaceState(null, '', location.pathname + location.search);
+})();
 
 // 保存済み設定をUIに反映（ボタン状態・bodyクラス）
 document.getElementById("sharpBtn").classList.toggle("active", !useFlat);
