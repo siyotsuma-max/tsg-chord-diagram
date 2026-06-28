@@ -1350,14 +1350,14 @@
   <div class="sheet-grid" id="sheetGrid">
     <div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>
   </div>
-  <div class="slots-io">
+  <div class="slots-io" id="sheetJsonIo">
     <button class="slot-io-btn" onclick="exportSheetJSON()">📤 コード表をJSONで保存</button>
     <label class="slot-io-btn" style="cursor:pointer;">
       📥 JSONを読み込み
       <input type="file" accept=".json" style="display:none" onchange="importSheetJSON(event)">
     </label>
   </div>
-  <div class="slots-io-hint">URL共有はその場で開いて確認、JSONはファイルでの受け渡し用です</div>
+  <div class="slots-io-hint" id="sheetJsonIoHint">URL共有はその場で開いて確認、JSONはファイルでの受け渡し用です</div>
   <!-- 保存スロット -->
   <div class="slots-section" id="slotsSection">
     <div class="slots-title">💾 マイコード表　保存スロット</div>
@@ -2583,15 +2583,35 @@ function printSheet() {
   const printStyle = document.createElement('style');
   printStyle.id = 'js-print-style';
   printStyle.textContent = `
+    @page { margin: 6mm; }
     @media print {
       header, .left-col, .tools-section,
       #slotsSection, #librarySection { display: none !important; }
       .main-layout { display: block !important; }
       #sheetSection { margin-top: 0 !important; }
       .sheet-header, .sheet-actions, #printOverlay { display: none !important; }
+      #sheetJsonIo, #sheetJsonIoHint { display: none !important; }
       .sheet-brand-print { display: block !important; }
       #sheetPrintTitle { display: block !important; }
       body { padding: 0 !important; background: #fff !important; }
+
+      /* 余白を削ってコードフォームを大きく表示 */
+      .sheet-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 4mm !important;
+      }
+      body.horiz-mode .sheet-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+      .sheet-card {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 4px 6px 6px !important;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+      }
+      .sheet-card svg { width: 100% !important; height: auto !important; }
+      .chord-name { font-size: 1.05rem !important; margin-bottom: 1px !important; }
     }
   `;
   document.head.appendChild(printStyle);
