@@ -2663,10 +2663,13 @@ function printSheet() {
       #sheetPrintTitle { display: block !important; }
       body { padding: 0 !important; background: #fff !important; }
 
-      /* 余白を削ってコードフォームを大きく表示（向きに関わらず4列・12個/ページで統一） */
+      /* 余白を削ってコードフォームを大きく表示（横向き図=3列、縦向き図=4列。どちらも12個でちょうど3〜4行） */
       .sheet-grid {
         grid-template-columns: repeat(4, 1fr) !important;
         gap: 3mm !important;
+      }
+      body.horiz-mode .sheet-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
       }
       .sheet-card {
         width: 100% !important;
@@ -2677,7 +2680,7 @@ function printSheet() {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
-      .sheet-card svg { width: 92% !important; height: auto !important; }
+      .sheet-card svg { width: 84% !important; height: auto !important; }
       .chord-name { font-size: 1rem !important; margin-bottom: 1px !important; }
     }
   `;
