@@ -1344,6 +1344,7 @@
   <div class="sheet-brand-print">
     <span class="sheet-brand-print-sub">TSG Guitar Tools</span>
     <span class="sheet-brand-print-main">TSG Basic Chord Diagram</span>
+    <span class="sheet-brand-print-date" id="sheetPrintDate"></span>
   </div>
   <!-- 印刷専用: ユーザー入力タイトル -->
   <div class="sheet-print-title" id="sheetPrintTitle"></div>
@@ -2579,6 +2580,9 @@ function printSheet() {
   const userTitle = document.getElementById('sheetTitleInput').value.trim();
   document.getElementById('sheetPrintTitle').textContent = userTitle;
 
+  // 印刷日をセット
+  document.getElementById('sheetPrintDate').textContent = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+
   // 印刷CSS を強制適用するスタイルを注入
   const printStyle = document.createElement('style');
   printStyle.id = 'js-print-style';
@@ -2591,7 +2595,42 @@ function printSheet() {
       #sheetSection { margin-top: 0 !important; }
       .sheet-header, .sheet-actions, #printOverlay { display: none !important; }
       #sheetJsonIo, #sheetJsonIoHint { display: none !important; }
-      .sheet-brand-print { display: block !important; }
+      .sheet-brand-print {
+        display: block !important;
+        text-align: center !important;
+        margin-bottom: 7mm !important;
+        padding-bottom: 4mm !important;
+        border-bottom: 3px solid #c0392b !important;
+        line-height: 1.25 !important;
+      }
+      .sheet-brand-print-sub {
+        display: block !important;
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        color: #c0392b !important;
+        letter-spacing: 0.45em !important;
+        text-transform: uppercase !important;
+        margin-bottom: 2.5mm !important;
+      }
+      .sheet-brand-print-main {
+        display: block !important;
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: #1a1a2e !important;
+        letter-spacing: 0.1em !important;
+        text-transform: uppercase !important;
+      }
+      .sheet-brand-print-date {
+        display: block !important;
+        font-family: 'Oswald', sans-serif !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+        color: #888 !important;
+        letter-spacing: 0.1em !important;
+        margin-top: 2.5mm !important;
+      }
       #sheetPrintTitle { display: block !important; }
       body { padding: 0 !important; background: #fff !important; }
 
@@ -2614,16 +2653,6 @@ function printSheet() {
       }
       .sheet-card svg { width: 92% !important; height: auto !important; }
       .chord-name { font-size: 1rem !important; margin-bottom: 1px !important; }
-
-      /* 縦向き(4列)は16個ごと、横向き(3列)は12個ごとにきれいに改ページ */
-      body:not(.horiz-mode) .sheet-card:nth-child(16n):not(:last-child) {
-        break-after: page !important;
-        page-break-after: always !important;
-      }
-      body.horiz-mode .sheet-card:nth-child(12n):not(:last-child) {
-        break-after: page !important;
-        page-break-after: always !important;
-      }
     }
   `;
   document.head.appendChild(printStyle);
