@@ -2586,8 +2586,8 @@ function printSheet() {
   // 既存の複製ヘッダーが残っていれば削除
   document.querySelectorAll('.sheet-print-page-header').forEach(el => el.remove());
 
-  // ページごとに改ページしてヘッダーを複製挿入（縦向き=12個ごと、横向き=6個ごと）
-  const chunkSize = useHorizontal ? 6 : 12;
+  // ページごとに改ページしてヘッダーを複製挿入（コード図の向きに関わらず12個ごと）
+  const chunkSize = 12;
   const grid = document.getElementById('sheetGrid');
   const originalBrand = document.querySelector('.sheet-brand-print');
   const cards = Array.from(grid.children).filter(el => el.classList.contains('sheet-card'));
@@ -2663,13 +2663,10 @@ function printSheet() {
       #sheetPrintTitle { display: block !important; }
       body { padding: 0 !important; background: #fff !important; }
 
-      /* 余白を削ってコードフォームを大きく表示 */
+      /* 余白を削ってコードフォームを大きく表示（向きに関わらず4列・12個/ページで統一） */
       .sheet-grid {
         grid-template-columns: repeat(4, 1fr) !important;
         gap: 3mm !important;
-      }
-      body.horiz-mode .sheet-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
       }
       .sheet-card {
         width: 100% !important;
