@@ -2598,7 +2598,7 @@ function printSheet() {
       /* 余白を削ってコードフォームを大きく表示 */
       .sheet-grid {
         grid-template-columns: repeat(4, 1fr) !important;
-        gap: 4mm !important;
+        gap: 3mm !important;
       }
       body.horiz-mode .sheet-grid {
         grid-template-columns: repeat(3, 1fr) !important;
@@ -2606,12 +2606,24 @@ function printSheet() {
       .sheet-card {
         width: 100% !important;
         box-sizing: border-box !important;
-        padding: 4px 6px 6px !important;
+        padding: 3px 5px 4px !important;
         box-shadow: none !important;
         border: 1px solid #ddd !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
-      .sheet-card svg { width: 100% !important; height: auto !important; }
-      .chord-name { font-size: 1.05rem !important; margin-bottom: 1px !important; }
+      .sheet-card svg { width: 92% !important; height: auto !important; }
+      .chord-name { font-size: 1rem !important; margin-bottom: 1px !important; }
+
+      /* 縦向き(4列)は16個ごと、横向き(3列)は12個ごとにきれいに改ページ */
+      body:not(.horiz-mode) .sheet-card:nth-child(16n):not(:last-child) {
+        break-after: page !important;
+        page-break-after: always !important;
+      }
+      body.horiz-mode .sheet-card:nth-child(12n):not(:last-child) {
+        break-after: page !important;
+        page-break-after: always !important;
+      }
     }
   `;
   document.head.appendChild(printStyle);
