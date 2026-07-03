@@ -451,6 +451,48 @@
     vertical-align: middle;
   }
   .sheet-actions { display: flex; gap: 8px; }
+  .sheet-preset-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px;
+    padding: 10px 12px;
+    background: #f7f8fa;
+    border-radius: 10px;
+  }
+  .sheet-preset-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #888;
+    white-space: nowrap;
+  }
+  .sheet-preset-select {
+    flex: 1;
+    min-width: 200px;
+    padding: 7px 10px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+  }
+  .sheet-preset-load-btn {
+    padding: 7px 16px;
+    background: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.12s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sheet-preset-load-btn:hover { background: #2e2e50; }
+  .sheet-preset-load-btn:active { transform: scale(0.97); }
   .clear-btn {
     padding: 9px 16px;
     background: #fff0f0;
@@ -1340,6 +1382,12 @@
       <button class="print-btn" onclick="printSheet()">🖨 コード表を印刷</button>
     </div>
   </div>
+  <!-- プリセット読み込み -->
+  <div class="sheet-preset-row" id="sheetPresetRow">
+    <span class="sheet-preset-label">📦 プリセット</span>
+    <select class="sheet-preset-select" id="chordPresetSelect"></select>
+    <button class="sheet-preset-load-btn" id="chordPresetLoadBtn" onclick="loadChordPreset()">読み込む</button>
+  </div>
   <!-- 印刷専用: 固定ブランドタイトル -->
   <div class="sheet-brand-print">
     <span class="sheet-brand-print-sub">TSG Guitar Tools</span>
@@ -1908,6 +1956,67 @@ function stopChord() {
   if (audioCtx) { audioCtx.close(); audioCtx = null; }
   const btn = document.getElementById('chordPlayBtn');
   if (btn) { btn.innerHTML = '▶<span class="play-label">再生</span>'; btn.dataset.playing = ''; }
+}
+
+// ===== コードプリセット =====
+// ================================================================
+// 各コードの形式: { name: "表示名（コード名）", rootNote: ルート音('C'等),
+//   frets: [6弦→1弦の押弦位置（-1=ミュート,0=開放,1以上=フレット）],
+//   fingers: [同順の指番号（0=指なし,1〜4）], baseFret: 基準フレット(通常1) }
+// プリセット追加時はこの配列に新しいオブジェクトを足すだけでOK
+const CHORD_PRESETS = [
+  {
+    label: '分数コードよく使うセット（オンコード）',
+    chords: [
+      { name: 'C/E',  rootNote: 'C', frets: [0,-1,2,0,1,0], fingers: [0,0,2,0,1,0], baseFret: 1 },
+      { name: 'C/G',  rootNote: 'C', frets: [3,-1,2,0,1,0], fingers: [3,0,2,0,1,0], baseFret: 1 },
+      { name: 'G/B',  rootNote: 'G', frets: [-1,2,0,0,0,3], fingers: [0,1,0,0,0,3], baseFret: 1 },
+      { name: 'G/D',  rootNote: 'G', frets: [-1,-1,0,0,0,3], fingers: [0,0,0,0,0,3], baseFret: 1 },
+      { name: 'D/F#', rootNote: 'D', frets: [2,-1,0,2,3,2], fingers: [1,0,0,2,3,4], baseFret: 1 },
+      { name: 'Em/B', rootNote: 'E', frets: [-1,2,2,0,0,0], fingers: [0,1,2,0,0,0], baseFret: 1 },
+      { name: 'Am/E', rootNote: 'A', frets: [0,0,2,2,1,0], fingers: [0,0,2,3,1,0], baseFret: 1 },
+    ]
+  },
+  {
+    label: 'テンションコードの入り口セット',
+    chords: [
+      { name: 'Cadd9', rootNote: 'C', frets: [-1,3,2,0,3,0], fingers: [0,3,2,0,4,0], baseFret: 1 },
+      { name: 'Cmaj7', rootNote: 'C', frets: [-1,3,2,0,0,0], fingers: [0,3,2,0,0,0], baseFret: 1 },
+      { name: 'Dsus4', rootNote: 'D', frets: [-1,-1,0,2,3,3], fingers: [0,0,0,1,3,4], baseFret: 1 },
+      { name: 'Dm7',   rootNote: 'D', frets: [-1,-1,0,2,1,1], fingers: [0,0,0,2,1,1], baseFret: 1 },
+      { name: 'Em7',   rootNote: 'E', frets: [0,2,0,0,0,0],   fingers: [0,2,0,0,0,0], baseFret: 1 },
+      { name: 'Fmaj7', rootNote: 'F', frets: [-1,-1,3,2,1,0], fingers: [0,0,3,2,1,0], baseFret: 1 },
+      { name: 'Gsus4', rootNote: 'G', frets: [3,-1,0,0,1,3],  fingers: [3,0,0,0,1,4], baseFret: 1 },
+      { name: 'Am7',   rootNote: 'A', frets: [-1,0,2,0,1,0],  fingers: [0,0,2,0,1,0], baseFret: 1 },
+    ]
+  },
+];
+
+function buildChordPresetSelect() {
+  const sel = document.getElementById('chordPresetSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  CHORD_PRESETS.forEach((preset, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${preset.label}（${preset.chords.length}個）`;
+    sel.appendChild(o);
+  });
+}
+
+function loadChordPreset() {
+  const sel = document.getElementById('chordPresetSelect');
+  const preset = CHORD_PRESETS[parseInt(sel.value)];
+  if (!preset) return;
+  if (myChords.length > 0 && !confirm(`「${preset.label}」を読み込みます。現在のマイコード表は上書きされます。よろしいですか？`)) return;
+  myChords = preset.chords.map(c => ({
+    root: c.rootNote || null,
+    type: null,
+    chord: { frets: c.frets, fingers: c.fingers, baseFret: c.baseFret, rootNote: c.rootNote, label: c.name },
+    chordName: c.name
+  }));
+  saveCurrentSheet();
+  renderSheet();
 }
 
 // ===== マイライブラリ =====
@@ -2613,6 +2722,7 @@ function printSheet() {
       #sheetSection { margin-top: 0 !important; }
       .sheet-header, .sheet-actions, #printOverlay { display: none !important; }
       #sheetJsonIo, #sheetJsonIoHint { display: none !important; }
+      #sheetPresetRow { display: none !important; }
       .sheet-brand-print {
         display: block !important;
         position: relative !important;
@@ -3085,6 +3195,7 @@ render();
 renderSheet();
 renderSlots();
 renderLibrary();
+buildChordPresetSelect();
 
 // キーボードショートカット
 document.addEventListener("keydown", (e) => {
