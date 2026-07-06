@@ -1379,6 +1379,14 @@
       <span class="slots-title" style="margin:0;">🎸 カスタムコード作成ライブラリ</span>
       <button class="library-new-btn" onclick="openEditor(null)">＋ 新規作成</button>
     </div>
+    <!-- プリセット読み込み -->
+    <div class="sheet-preset-row">
+      <span class="sheet-preset-label">📦 プリセット</span>
+      <select class="sheet-preset-select" id="libraryPresetSelect"></select>
+      <button class="sheet-preset-load-btn" id="libraryPresetLoadBtn" onclick="loadLibraryPreset()">読み込む</button>
+      <button class="slot-io-btn" id="libraryPresetSaveBtn" onclick="saveLibraryAsPreset()">＋ 保存</button>
+      <button class="slot-io-btn" id="libraryPresetDeleteBtn" onclick="deleteLibraryPreset()">🗑 削除</button>
+    </div>
     <div class="library-empty" id="libraryEmpty">作成したカスタムコードがここに表示されます</div>
     <div class="library-grid" id="libraryGrid"></div>
     <div class="slots-io">
@@ -1921,6 +1929,138 @@ function saveLibrary() {
   localStorage.setItem(LIBRARY_KEY, JSON.stringify(library));
 }
 
+// ===== ライブラリプリセット =====
+// ================================================================
+// 各コードの形式: { name: "表示名（コード名）", rootNote: ルート音('C'等),
+//   frets: [6弦→1弦の押弦位置（-1=ミュート,0=開放,1以上=フレット）],
+//   fingers: [同順の指番号（0=指なし,1〜4）], baseFret: 基準フレット(通常1) }
+// 固定プリセット追加時はこの配列に新しいオブジェクトを足すだけでOK
+const CHORD_PRESETS = [
+  {
+    label: '分数コードよく使うセット（オンコード）',
+    chords: [
+      { name: 'C/G',   rootNote: 'C', frets: [3,-1,2,0,1,0],  fingers: [3,0,2,0,1,0], baseFret: 1 },
+      { name: 'C/D',   rootNote: 'C', frets: [-1,-1,0,0,1,0], fingers: [0,0,0,0,1,0], baseFret: 1 },
+      { name: 'C/B',   rootNote: 'C', frets: [-1,2,2,0,1,0],  fingers: [0,2,3,0,1,0], baseFret: 1 },
+      { name: 'D/F#',  rootNote: 'D', frets: [2,-1,0,2,3,2],  fingers: [1,0,0,2,3,4], baseFret: 1 },
+      { name: 'D/A',   rootNote: 'D', frets: [-1,0,0,2,3,2],  fingers: [0,0,0,1,3,2], baseFret: 1 },
+      { name: 'E/G#',  rootNote: 'E', frets: [4,-1,2,1,0,0],  fingers: [4,0,2,1,0,0], baseFret: 1 },
+      { name: 'F/A',   rootNote: 'F', frets: [-1,0,3,2,1,-1], fingers: [0,0,3,2,1,0], baseFret: 1 },
+      { name: 'F/G',   rootNote: 'F', frets: [3,-1,3,2,1,1],  fingers: [3,0,4,2,1,1], baseFret: 1 },
+      { name: 'G/F#',  rootNote: 'G', frets: [2,2,0,0,0,3],   fingers: [1,1,0,0,0,4], baseFret: 1 },
+      { name: 'Am/C',  rootNote: 'A', frets: [-1,3,2,2,1,0],  fingers: [0,4,2,3,1,0], baseFret: 1 },
+      { name: 'A/C#',  rootNote: 'A', frets: [-1,4,2,2,2,0],  fingers: [0,3,1,1,1,0], baseFret: 1 },
+      { name: 'Dm7/G', rootNote: 'D', frets: [3,-1,0,2,1,1],  fingers: [3,0,0,2,1,1], baseFret: 1 },
+    ]
+  },
+  {
+    label: 'sus4コードよく使うセット（解決先とペア）',
+    chords: [
+      { name: 'Csus4', rootNote: 'C', frets: [-1,3,3,0,1,1],  fingers: [0,3,4,0,1,1], baseFret: 1 },
+      { name: 'C',     rootNote: 'C', frets: [-1,3,2,0,1,0],  fingers: [0,3,2,0,1,0], baseFret: 1 },
+      { name: 'Dsus4', rootNote: 'D', frets: [-1,-1,0,2,3,3], fingers: [0,0,0,1,3,4], baseFret: 1 },
+      { name: 'D',     rootNote: 'D', frets: [-1,-1,0,2,3,2], fingers: [0,0,0,1,3,2], baseFret: 1 },
+      { name: 'Esus4', rootNote: 'E', frets: [0,2,2,2,0,0],   fingers: [0,1,2,3,0,0], baseFret: 1 },
+      { name: 'E',     rootNote: 'E', frets: [0,2,2,1,0,0],   fingers: [0,2,3,1,0,0], baseFret: 1 },
+      { name: 'Gsus4', rootNote: 'G', frets: [3,-1,0,0,1,3],  fingers: [3,0,0,0,1,4], baseFret: 1 },
+      { name: 'G',     rootNote: 'G', frets: [3,2,0,0,0,3],   fingers: [2,1,0,0,0,4], baseFret: 1 },
+      { name: 'Asus4', rootNote: 'A', frets: [-1,0,2,2,3,0],  fingers: [0,0,1,2,3,0], baseFret: 1 },
+      { name: 'A',     rootNote: 'A', frets: [-1,0,2,2,2,0],  fingers: [0,0,1,2,3,0], baseFret: 1 },
+    ]
+  },
+];
+
+// ユーザーが保存したライブラリセット（localStorage）
+const LIBRARY_PRESET_KEY = 'tsg-chord-library-user-presets';
+let libraryUserPresets = [];
+try { libraryUserPresets = JSON.parse(localStorage.getItem(LIBRARY_PRESET_KEY)) || []; } catch { libraryUserPresets = []; }
+
+function saveLibraryUserPresets() {
+  localStorage.setItem(LIBRARY_PRESET_KEY, JSON.stringify(libraryUserPresets));
+}
+
+function buildLibraryPresetSelect() {
+  const sel = document.getElementById('libraryPresetSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+
+  const builtinGroup = document.createElement('optgroup');
+  builtinGroup.label = 'プリセット';
+  CHORD_PRESETS.forEach((preset, i) => {
+    const o = document.createElement('option');
+    o.value = `builtin:${i}`;
+    o.textContent = `${preset.label}（${preset.chords.length}個）`;
+    builtinGroup.appendChild(o);
+  });
+  sel.appendChild(builtinGroup);
+
+  if (libraryUserPresets.length > 0) {
+    const userGroup = document.createElement('optgroup');
+    userGroup.label = 'ユーザーセット';
+    libraryUserPresets.forEach((preset, i) => {
+      const o = document.createElement('option');
+      o.value = `user:${i}`;
+      o.textContent = `${preset.label}（${preset.chords.length}個）`;
+      userGroup.appendChild(o);
+    });
+    sel.appendChild(userGroup);
+  }
+}
+
+function getSelectedLibraryPreset() {
+  const sel = document.getElementById('libraryPresetSelect');
+  const [kind, idxStr] = (sel.value || '').split(':');
+  const idx = parseInt(idxStr);
+  if (kind === 'builtin') return CHORD_PRESETS[idx];
+  if (kind === 'user') return libraryUserPresets[idx];
+  return null;
+}
+
+function loadLibraryPreset() {
+  const preset = getSelectedLibraryPreset();
+  if (!preset) return;
+  if (library.length > 0 && !confirm(`「${preset.label}」を読み込みます。現在のライブラリは上書きされます。よろしいですか？`)) return;
+  library = preset.chords.map(c => ({
+    id: Date.now() + Math.random(),
+    name: c.name,
+    frets: [...c.frets],
+    fingers: [...c.fingers],
+    baseFret: c.baseFret,
+    rootNote: c.rootNote || '',
+    label: c.name
+  }));
+  saveLibrary();
+  renderLibrary();
+}
+
+function saveLibraryAsPreset() {
+  if (library.length === 0) { alert('ライブラリが空です。'); return; }
+  const name = prompt('ユーザーセットの名前を入力してください');
+  if (!name || !name.trim()) return;
+  libraryUserPresets.push({
+    label: name.trim(),
+    chords: library.map(item => ({
+      name: item.name, rootNote: item.rootNote, frets: item.frets, fingers: item.fingers, baseFret: item.baseFret
+    }))
+  });
+  saveLibraryUserPresets();
+  buildLibraryPresetSelect();
+  alert(`「${name.trim()}」として保存しました！`);
+}
+
+function deleteLibraryPreset() {
+  const sel = document.getElementById('libraryPresetSelect');
+  const [kind, idxStr] = (sel.value || '').split(':');
+  if (kind !== 'user') { alert('プリセット（固定セット）は削除できません。ユーザーセットのみ削除できます。'); return; }
+  const idx = parseInt(idxStr);
+  const preset = libraryUserPresets[idx];
+  if (!preset) return;
+  if (!confirm(`「${preset.label}」を削除しますか？`)) return;
+  libraryUserPresets.splice(idx, 1);
+  saveLibraryUserPresets();
+  buildLibraryPresetSelect();
+}
+
 function renderLibrary() {
   const grid = document.getElementById('libraryGrid');
   const empty = document.getElementById('libraryEmpty');
@@ -2033,8 +2173,10 @@ function importLibrary(event) {
     try {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) throw new Error();
+      const clean = sanitizeLibraryChords(data);
+      if (data.length > 0 && clean.length === 0) throw new Error(); // 要素はあるが全て壊れている
       if (!confirm('インポートするとライブラリが上書きされます。よろしいですか？')) return;
-      library = data;
+      library = clean;
       saveLibrary();
       renderLibrary();
       alert('インポート完了しました！');
@@ -2300,8 +2442,11 @@ function importSlots(event) {
       if (!Array.isArray(allSlots)) throw new Error();
       if (!confirm('インポートすると全スロットが上書きされます。よろしいですか？')) return;
       for (let i = 0; i < SLOT_COUNT; i++) {
-        if (allSlots[i]) {
-          localStorage.setItem(SLOT_KEY(i), JSON.stringify(allSlots[i]));
+        const slot = allSlots[i];
+        if (slot && Array.isArray(slot.chords)) {
+          const cleanChords = sanitizeSheetChords(slot.chords).slice(0, MAX_SHEET_CHORDS);
+          const name = typeof slot.name === 'string' ? slot.name : `スロット ${i + 1}`;
+          localStorage.setItem(SLOT_KEY(i), JSON.stringify({ name, chords: cleanChords }));
         } else {
           localStorage.removeItem(SLOT_KEY(i));
         }
@@ -2463,7 +2608,7 @@ function saveCurrentSheet() {
 }
 
 function addToSheet(root, type, chord, chordName) {
-  if (myChords.length >= 16) return;
+  if (myChords.length >= MAX_SHEET_CHORDS) return;
   myChords.push({ root, type, chord, chordName });
   saveCurrentSheet();
   renderSheet();
@@ -2507,13 +2652,35 @@ function buildSheetPayload() {
   return { t: sheetTitleInput.value, c: myChords };
 }
 
+// ===== インポート/共有データの検証 =====
+// 壊れたデータで描画クラッシュ＆localStorage永続破損が起きるのを防ぐ
+const MAX_SHEET_CHORDS = 16;
+
+function isValidFretArray(a) {
+  return Array.isArray(a) && a.length === 6 && a.every(n => typeof n === 'number');
+}
+// マイコード表の要素（chordネスト構造）から有効なものだけ返す
+function sanitizeSheetChords(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(item =>
+    item && item.chord && isValidFretArray(item.chord.frets) && isValidFretArray(item.chord.fingers)
+  );
+}
+// ライブラリの要素（フラット構造）から有効なものだけ返す
+function sanitizeLibraryChords(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(item => item && isValidFretArray(item.frets) && isValidFretArray(item.fingers));
+}
+
 // 現在のコード表に payload を反映する（既存データがあれば上書き確認）
 function applySheetPayload(payload) {
   if (!payload || !Array.isArray(payload.c)) return false;
+  const clean = sanitizeSheetChords(payload.c).slice(0, MAX_SHEET_CHORDS);
+  if (clean.length === 0) return false; // 有効なコードが1つもなければ不正データ扱い
   if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return false;
-  myChords = payload.c;
+  myChords = clean;
   saveCurrentSheet();
-  sheetTitleInput.value = payload.t || '';
+  sheetTitleInput.value = typeof payload.t === 'string' ? payload.t : '';
   sheetPrintTitle.textContent = sheetTitleInput.value;
   localStorage.setItem(TITLE_KEY, sheetTitleInput.value);
   renderSheet();
@@ -3085,6 +3252,7 @@ render();
 renderSheet();
 renderSlots();
 renderLibrary();
+buildLibraryPresetSelect();
 
 // キーボードショートカット
 document.addEventListener("keydown", (e) => {
