@@ -2158,11 +2158,18 @@ function renderLibrary() {
 
 function exportLibrary() {
   const json = JSON.stringify(library, null, 2);
+  downloadJSON(json, `tsg-custom-library-${new Date().toISOString().slice(0,10)}.json`);
+}
+
+// JSON文字列をファイルとしてダウンロードさせる（Blob URLは使用後に解放）
+function downloadJSON(json, filename) {
   const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `tsg-custom-library-${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url;
+  a.download = filename;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function importLibrary(event) {
@@ -2394,10 +2401,13 @@ function renderSlots() {
     loadBtn.onclick = () => {
       const d = loadSlotData(i);
       if (!d) return;
+      const clean = sanitizeSheetChords(d.chords).slice(0, MAX_SHEET_CHORDS);
+      if (clean.length === 0) { alert('このスロットのデータが壊れているため呼び出せません。'); return; }
       if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return;
-      myChords = d.chords;
+      myChords = clean;
       saveCurrentSheet();
       renderSheet();
+      render();
     };
 
     const delBtn = document.createElement('button');
@@ -2425,11 +2435,7 @@ function exportSlots() {
     allSlots.push(loadSlotData(i));
   }
   const json = JSON.stringify(allSlots, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `tsg-chord-slots-${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
+  downloadJSON(json, `tsg-chord-slots-${new Date().toISOString().slice(0,10)}.json`);
 }
 
 function importSlots(event) {
@@ -2571,7 +2577,7 @@ function render() {
     addBtn.className = "add-btn";
     addBtn.id = "addBtn";
     addBtn.textContent = "＋ コード表に追加";
-    addBtn.disabled = myChords.length >= 16;
+    addBtn.disabled = myChords.length >= MAX_SHEET_CHORDS;
     addBtn.onclick = () => addToSheet(selectedRoot, selectedType, chord, chordName);
     addRow.appendChild(addBtn);
 
@@ -2657,27 +2663,42 @@ function buildSheetPayload() {
 const MAX_SHEET_CHORDS = 16;
 
 function isValidFretArray(a) {
-  return Array.isArray(a) && a.length === 6 && a.every(n => typeof n === 'number');
+  // NaN・小数・範囲外（巨大値で描画が壊れる）を弾く
+  return Array.isArray(a) && a.length === 6 && a.every(n => Number.isInteger(n) && n >= -1 && n <= 24);
+}
+// baseFretが欠落・不正でも描画/再生が破綻しないよう1に補正
+function normalizeBaseFret(obj) {
+  if (!Number.isInteger(obj.baseFret) || obj.baseFret < 1 || obj.baseFret > 24) obj.baseFret = 1;
 }
 // マイコード表の要素（chordネスト構造）から有効なものだけ返す
 function sanitizeSheetChords(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.filter(item =>
     item && item.chord && isValidFretArray(item.chord.frets) && isValidFretArray(item.chord.fingers)
-  );
+  ).map(item => {
+    normalizeBaseFret(item.chord);
+    if (typeof item.chordName !== 'string') item.chordName = '';
+    return item;
+  });
 }
 // ライブラリの要素（フラット構造）から有効なものだけ返す
 function sanitizeLibraryChords(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.filter(item => item && isValidFretArray(item.frets) && isValidFretArray(item.fingers));
+  return arr.filter(item => item && isValidFretArray(item.frets) && isValidFretArray(item.fingers))
+    .map(item => {
+      normalizeBaseFret(item);
+      if (typeof item.name !== 'string') item.name = '';
+      return item;
+    });
 }
 
 // 現在のコード表に payload を反映する（既存データがあれば上書き確認）
+// 戻り値: true=反映 / false=データ不正 / 'cancelled'=ユーザーが上書きを取りやめ
 function applySheetPayload(payload) {
   if (!payload || !Array.isArray(payload.c)) return false;
   const clean = sanitizeSheetChords(payload.c).slice(0, MAX_SHEET_CHORDS);
   if (clean.length === 0) return false; // 有効なコードが1つもなければ不正データ扱い
-  if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return false;
+  if (myChords.length > 0 && !confirm('現在のコード表を上書きしますか？')) return 'cancelled';
   myChords = clean;
   saveCurrentSheet();
   sheetTitleInput.value = typeof payload.t === 'string' ? payload.t : '';
@@ -2716,11 +2737,7 @@ function copyShareUrl() {
 function exportSheetJSON() {
   if (myChords.length === 0) { alert('コード表が空です。'); return; }
   const json = JSON.stringify(buildSheetPayload(), null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `tsg-chord-sheet-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
+  downloadJSON(json, `tsg-chord-sheet-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 function importSheetJSON(event) {
@@ -2730,8 +2747,10 @@ function importSheetJSON(event) {
   reader.onload = (e) => {
     try {
       const payload = JSON.parse(e.target.result);
-      if (!applySheetPayload(payload)) return;
-      alert('コード表を読み込みました！');
+      const result = applySheetPayload(payload);
+      if (result === true) alert('コード表を読み込みました！');
+      else if (result === false) alert('ファイルの形式が正しくありません。');
+      // 'cancelled'（上書き取りやめ）は何も表示しない
     } catch {
       alert('ファイルの形式が正しくありません。');
     }
@@ -2889,7 +2908,7 @@ function printSheet() {
 function renderSheet() {
   const grid = document.getElementById("sheetGrid");
   const count = document.getElementById("sheetCount");
-  count.textContent = `${myChords.length} / 16`;
+  count.textContent = `${myChords.length} / ${MAX_SHEET_CHORDS}`;
 
   if (myChords.length === 0) {
     grid.innerHTML = '<div class="sheet-empty">コードを選んで「コード表に追加」を押してください（最大16個）</div>';
@@ -3194,11 +3213,11 @@ document.body.classList.add("horiz-mode");
 // 初期表示：Cメジャー
 selectedRoot = "C";
 selectedType = "major";
-// 前回のコード表を自動復元
+// 前回のコード表を自動復元（壊れたデータが残っていても起動できるよう検証を通す）
 try {
   const saved = localStorage.getItem(CURRENT_KEY);
-  if (saved) myChords = JSON.parse(saved);
-} catch {}
+  if (saved) myChords = sanitizeSheetChords(JSON.parse(saved)).slice(0, MAX_SHEET_CHORDS);
+} catch { myChords = []; }
 
 // タイトル入力の初期化
 const sheetTitleInput = document.getElementById('sheetTitleInput');
@@ -3223,7 +3242,7 @@ sheetTitleInput.addEventListener('input', () => {
   if (!m) return;
   try {
     const payload = JSON.parse(b64urlDecode(m[1]));
-    applySheetPayload(payload);
+    if (applySheetPayload(payload) === false) alert('共有URLのデータが壊れているため読み込めませんでした。');
   } catch {
     alert('共有URLの読み込みに失敗しました。');
   }
