@@ -2035,17 +2035,28 @@ function loadLibraryPreset() {
 
 function saveLibraryAsPreset() {
   if (library.length === 0) { alert('ライブラリが空です。'); return; }
-  const name = prompt('ユーザーセットの名前を入力してください');
+  const sel = document.getElementById('libraryPresetSelect');
+  // 選択中がユーザーセットならその名前を初期値にする（上書き保存しやすく）
+  const [selKind, selIdxStr] = (sel.value || '').split(':');
+  const selectedUser = selKind === 'user' ? libraryUserPresets[parseInt(selIdxStr)] : null;
+  const name = prompt('ユーザーセットの名前を入力してください\n（既存のユーザーセットと同じ名前なら上書き保存します）', selectedUser ? selectedUser.label : '');
   if (!name || !name.trim()) return;
-  libraryUserPresets.push({
-    label: name.trim(),
-    chords: library.map(item => ({
-      name: item.name, rootNote: item.rootNote, frets: item.frets, fingers: item.fingers, baseFret: item.baseFret
-    }))
-  });
+  const trimmed = name.trim();
+  const chords = library.map(item => ({
+    name: item.name, rootNote: item.rootNote, frets: item.frets, fingers: item.fingers, baseFret: item.baseFret
+  }));
+  const existIdx = libraryUserPresets.findIndex(p => p.label === trimmed);
+  if (existIdx >= 0) {
+    if (!confirm(`ユーザーセット「${trimmed}」に上書き保存しますか？`)) return;
+    libraryUserPresets[existIdx] = { label: trimmed, chords };
+  } else {
+    libraryUserPresets.push({ label: trimmed, chords });
+  }
   saveLibraryUserPresets();
   buildLibraryPresetSelect();
-  alert(`「${name.trim()}」として保存しました！`);
+  // 保存したセットを選択状態にしておく
+  sel.value = `user:${existIdx >= 0 ? existIdx : libraryUserPresets.length - 1}`;
+  alert(existIdx >= 0 ? `「${trimmed}」を上書き保存しました！` : `「${trimmed}」として保存しました！`);
 }
 
 function deleteLibraryPreset() {
