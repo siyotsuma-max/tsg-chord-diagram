@@ -3086,7 +3086,10 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const FRET_SPACING   = compact ? 27 : 36; // フレットとフレットの間隔（横方向）
   const MARGIN_LEFT  = compact ? 30 : 40;  // 左マージン（×○記号用スペース）
   const MARGIN_TOP   = compact ? 14 : 18;  // 上マージン（常に一定）
-  const MARGIN_BOTTOM = compact ? 20 : 26; // 下マージン（frラベル用スペースを確保）
+  // 6弦（最下段）の1フレット目にドットがあると、その真下のfrラベルがドットに隠れるため
+  // その場合だけ下マージンを広げてラベルをドットの下に逃がす（ルート二重丸の最大半径ぶん）
+  const frClear = chord.baseFret > 1 && chord.frets[0] === 1 ? (compact ? 12 : 15) : 0;
+  const MARGIN_BOTTOM = (compact ? 20 : 26) + frClear; // 下マージン（frラベル用スペースを確保）
   const DOT_R = compact ? 9 : 12;
 
   // svgサイズ: 横=左マージン+フレット幅, 縦=上マージン+弦間隔×5+下マージン
@@ -3125,10 +3128,10 @@ function drawDiagramH(chord, rootNote, compact = false) {
   const frets   = chord.frets;
   const fingers = chord.fingers;
 
-  // ベースフレット番号（2fr以上はグリッド下に表示）
+  // ベースフレット番号（2fr以上はグリッド下・1フレット目の列の真下に表示）
   if (baseFret > 1) {
     const frFontSize = compact ? "0.55rem" : "0.72rem";
-    const frY = MARGIN_TOP + STRING_SPACING * (NUM_STRINGS - 1) + (compact ? 13 : 17);
+    const frY = MARGIN_TOP + STRING_SPACING * (NUM_STRINGS - 1) + (compact ? 13 : 17) + frClear;
     svg.appendChild(makeText(baseFret + "fr", MARGIN_LEFT + FRET_SPACING * 0.5, frY, "#888", frFontSize));
   }
 
