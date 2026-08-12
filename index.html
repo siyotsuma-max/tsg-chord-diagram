@@ -617,6 +617,73 @@
   .help-badge.root { background: #c0392b; color: #fff; }
   .help-badge.type { background: #2176ae; color: #fff; }
 
+  /* ====== ユーザーセット保存モーダル ====== */
+  .preset-save-sub {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 0.06em;
+    margin-bottom: 7px;
+  }
+  .preset-save-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 38vh;
+    overflow-y: auto;
+  }
+  .preset-save-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .preset-save-item:hover { background: #eef4fb; border-color: #2176ae; }
+  .preset-save-item:active { transform: scale(0.98); }
+  .preset-save-item .cnt {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #2176ae;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .preset-save-newrow { display: flex; gap: 8px; }
+  .preset-save-input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.92rem;
+  }
+  .preset-save-input:focus { outline: none; border-color: #2176ae; }
+  .preset-save-btn {
+    padding: 9px 16px;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .preset-save-btn:hover { background: #219a52; }
+  .preset-save-btn:active { transform: scale(0.97); }
+
   /* ====== Sheet title input ====== */
   .sheet-title-input {
     padding: 4px 10px;
@@ -1164,6 +1231,25 @@
     <p style="font-size:0.85rem;color:#666;margin-bottom:14px;line-height:1.6;">このURLを開くと、今のマイコード表がそのまま表示されます。生徒さんに送ってチェックに使ってください。</p>
     <input type="text" id="shareUrlInput" readonly style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;margin-bottom:12px;box-sizing:border-box;" onclick="this.select()">
     <button class="share-btn" id="shareCopyBtn" style="width:100%;justify-content:center;" onclick="copyShareUrl()">📋 URLをコピー</button>
+  </div>
+</div>
+
+<!-- ユーザーセット保存モーダル -->
+<div class="modal-overlay" id="presetSaveModal" onclick="if(event.target===this)closePresetSaveModal()">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closePresetSaveModal()">✕</button>
+    <div class="modal-title">📦 ユーザーセットに保存</div>
+    <p style="font-size:0.82rem;color:#888;margin-bottom:14px;line-height:1.6;">今のライブラリの内容（<span id="presetSaveCount">0</span>個）を保存します。</p>
+    <div id="presetOverwriteBlock">
+      <div class="preset-save-sub">既存のセットに上書き（タップで保存）</div>
+      <div class="preset-save-list" id="presetOverwriteList"></div>
+    </div>
+    <div class="preset-save-sub" style="margin-top:16px;">新しいセットとして保存</div>
+    <div class="preset-save-newrow">
+      <input type="text" id="presetNewName" class="preset-save-input" placeholder="セット名（例: 26-08 Basic）" maxlength="30"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewLibraryPreset();}">
+      <button class="preset-save-btn" onclick="saveNewLibraryPreset()">＋ 新規保存</button>
+    </div>
   </div>
 </div>
 
@@ -2033,30 +2119,76 @@ function loadLibraryPreset() {
   renderLibrary();
 }
 
+// 「＋ 保存」→ 既存ユーザーセット一覧（タップで上書き）＋新規保存欄のモーダルを開く
 function saveLibraryAsPreset() {
   if (library.length === 0) { alert('ライブラリが空です。'); return; }
-  const sel = document.getElementById('libraryPresetSelect');
-  // 選択中がユーザーセットならその名前を初期値にする（上書き保存しやすく）
-  const [selKind, selIdxStr] = (sel.value || '').split(':');
-  const selectedUser = selKind === 'user' ? libraryUserPresets[parseInt(selIdxStr)] : null;
-  const name = prompt('ユーザーセットの名前を入力してください\n（既存のユーザーセットと同じ名前なら上書き保存します）', selectedUser ? selectedUser.label : '');
-  if (!name || !name.trim()) return;
-  const trimmed = name.trim();
-  const chords = library.map(item => ({
+  document.getElementById('presetSaveCount').textContent = library.length;
+
+  const list = document.getElementById('presetOverwriteList');
+  list.innerHTML = '';
+  libraryUserPresets.forEach((preset, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-save-item';
+    const nameEl = document.createElement('span');
+    nameEl.textContent = preset.label;           // textContentで安全に挿入
+    const cntEl = document.createElement('span');
+    cntEl.className = 'cnt';
+    cntEl.textContent = `現在${preset.chords.length}個 → 上書き`;
+    btn.appendChild(nameEl);
+    btn.appendChild(cntEl);
+    btn.onclick = () => overwriteLibraryPreset(i);
+    list.appendChild(btn);
+  });
+  // ユーザーセットが1つも無ければ上書き欄は隠す
+  document.getElementById('presetOverwriteBlock').style.display = libraryUserPresets.length > 0 ? '' : 'none';
+
+  const input = document.getElementById('presetNewName');
+  input.value = '';
+  document.getElementById('presetSaveModal').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+function closePresetSaveModal() {
+  document.getElementById('presetSaveModal').classList.remove('open');
+}
+
+// 現在のライブラリをプリセット保存用の形に変換
+function currentLibraryAsPresetChords() {
+  return library.map(item => ({
     name: item.name, rootNote: item.rootNote, frets: item.frets, fingers: item.fingers, baseFret: item.baseFret
   }));
-  const existIdx = libraryUserPresets.findIndex(p => p.label === trimmed);
+}
+
+function overwriteLibraryPreset(idx) {
+  const preset = libraryUserPresets[idx];
+  if (!preset) return;
+  if (!confirm(`ユーザーセット「${preset.label}」を、今のライブラリ（${library.length}個）で上書き保存しますか？`)) return;
+  libraryUserPresets[idx] = { label: preset.label, chords: currentLibraryAsPresetChords() };
+  finishLibraryPresetSave(idx, `「${preset.label}」を上書き保存しました！`);
+}
+
+function saveNewLibraryPreset() {
+  const input = document.getElementById('presetNewName');
+  const name = (input.value || '').trim();
+  if (!name) { alert('セット名を入力してください。'); input.focus(); return; }
+  const existIdx = libraryUserPresets.findIndex(p => p.label === name);
   if (existIdx >= 0) {
-    if (!confirm(`ユーザーセット「${trimmed}」に上書き保存しますか？`)) return;
-    libraryUserPresets[existIdx] = { label: trimmed, chords };
-  } else {
-    libraryUserPresets.push({ label: trimmed, chords });
+    if (!confirm(`同じ名前のユーザーセット「${name}」があります。上書き保存しますか？`)) return;
+    libraryUserPresets[existIdx] = { label: name, chords: currentLibraryAsPresetChords() };
+    finishLibraryPresetSave(existIdx, `「${name}」を上書き保存しました！`);
+    return;
   }
+  libraryUserPresets.push({ label: name, chords: currentLibraryAsPresetChords() });
+  finishLibraryPresetSave(libraryUserPresets.length - 1, `「${name}」として保存しました！`);
+}
+
+function finishLibraryPresetSave(idx, message) {
   saveLibraryUserPresets();
   buildLibraryPresetSelect();
-  // 保存したセットを選択状態にしておく
-  sel.value = `user:${existIdx >= 0 ? existIdx : libraryUserPresets.length - 1}`;
-  alert(existIdx >= 0 ? `「${trimmed}」を上書き保存しました！` : `「${trimmed}」として保存しました！`);
+  const sel = document.getElementById('libraryPresetSelect');
+  if (sel) sel.value = `user:${idx}`;   // 保存したセットを選択状態にしておく
+  closePresetSaveModal();
+  alert(message);
 }
 
 function deleteLibraryPreset() {
@@ -3306,6 +3438,7 @@ document.addEventListener("keydown", (e) => {
   // Enterキーでコード表に追加
   if (e.key !== "Enter") return;
   if (document.getElementById("helpModal").classList.contains("open")) return;
+  if (document.getElementById("presetSaveModal").classList.contains("open")) return;
   if (inField) return;
   const btn = document.getElementById("addBtn");
   if (btn && !btn.disabled) btn.click();
