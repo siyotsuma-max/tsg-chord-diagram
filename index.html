@@ -2,7 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/png" sizes="64x64" href="images/favicon-64.png">
+<!-- ホーム画面追加（PWA）用：アイコン・アプリ名・全画面表示・テーマ色。オフライン対応は sw.js -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon-180.png">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chord">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ギターコード表【プロ監修・無料】- ギタースクールTSG</title>
 <meta name="description" content="初心者向けギターコード表。コードの押さえ方を図で確認できるプロ監修・無料Webアプリ。主要コードを一覧表示。ギタースクールTSG提供。監修：杉山つよし。">
@@ -3455,5 +3463,25 @@ document.addEventListener("keydown", (e) => {
   © 2026 ギタースクールTSG（杉山つよし）&nbsp;All Rights Reserved.<br>
   無断複製・転載を禁じます。
 </footer>
+
+<script>
+// ===== PWA：オフライン対応（Service Worker の登録）とホーム画面起動時の調整 =====
+// https（本番）と localhost でのみ登録。file:// では動作しないため黙ってスキップ。
+// 登録に失敗しても通常どおり動く（オフライン機能が無効になるだけ）。
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('[sw] register failed:', e));
+  });
+}
+// ホーム画面から起動した全画面表示（スタンドアロン）では、他アプリへのリンクを別窓で開く。
+// 全画面表示には「戻る」ボタンが無く、同じ窓で遷移すると戻れなくなるため。
+(function () {
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    || window.navigator.standalone === true;
+  if (standalone) {
+    document.querySelectorAll('a[href*="tsg-gt.com"]').forEach((a) => { a.target = '_blank'; a.rel = 'noopener'; });
+  }
+})();
+</script>
 </body>
 </html>
